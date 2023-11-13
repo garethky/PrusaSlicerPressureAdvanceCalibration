@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Prusa Slicer Pressure Advance Calibration</title>
+    
+    <link rel="stylesheet" href="./css/flexbox.min.css"/>
+    <link rel="stylesheet" href="./css/pico.min.css"/>
+    <style>
+        .drop-target {
+            border: 1px solid gray; padding: 10px 20px 0px 20px;
+        }
+        article h2, article h3, article h4, article h5, article h6 {
+            border-bottom: 3px solid #fa6831;
+            padding-bottom: 8px;
+        }
+
+        /* Prusa color for light color scheme (Default) */
+        /* Can be forced with data-theme="light" */
+        [data-theme=light],
+        :root:not([data-theme=dark]) {
+        /*--pico-text-selection-color: rgba(210, 122, 1, 0.25);*/
+        --pico-primary: #9c5900;
+        --pico-primary-background: rgb(250, 104, 49);
+        --pico-primary-underline: rgba(156, 89, 0, 0.5);
+        --pico-primary-hover: #7a4400;
+        --pico-primary-hover-background: #e48500;
+        --pico-primary-focus: rgba(210, 122, 1, 0.25);
+        --pico-primary-inverse: #000;
+        --pico-switch-color: var(--pico-secondary-hover);
+        }
+
+        /* Prusa color for dark color scheme (Auto) */
+        /* Automatically enabled if user has Dark mode enabled */
+        @media only screen and (prefers-color-scheme: dark) {
+        :root:not([data-theme]) {
+            /*--pico-text-selection-color: rgba(228, 133, 0, 0.1875);*/
+            --pico-primary: #e48500;
+            --pico-primary-background: rgb(250, 104, 49);
+            --pico-primary-underline: rgba(228, 133, 0, 0.5);
+            --pico-primary-hover: #ffa23a;
+            --pico-primary-hover-background: #ffa23a;
+            --pico-primary-focus: rgba(228, 133, 0, 0.25);
+            --pico-primary-inverse: #000;
+            --pico-switch-color: var(--pico-background-color);
+        }
+        }
+
+        /* Prusa color for dark color scheme (Forced) */
+        /* Enabled if forced with data-theme="dark" */
+        [data-theme=dark] {
+        /*--pico-text-selection-color: rgba(228, 133, 0, 0.1875);*/
+        --pico-primary: #e48500;
+        --pico-primary-background: rgb(250, 104, 49);
+        --pico-primary-underline: rgba(228, 133, 0, 0.5);
+        --pico-primary-hover: #ffa23a;
+        --pico-primary-hover-background: #ffa23a;
+        --pico-primary-focus: rgba(228, 133, 0, 0.25);
+        --pico-primary-inverse: #000;
+        --pico-switch-color: var(--pico-background-color);
+        }
+    </style>
+    <!-- 
+        Do some button theme extraction here:
+        https://blog.prusa3d.com/calculator_3416/
+    -->
+</head>
+<body>
+    <main id="drop-target" class="container" data-theme="light">
+        <h1>Prusa Slicer Pressure Advance Calibration</h1>
+        <article>
+            <hgroup>
+                <header>
+                    <h2>1. Get the STL</h2>
+                </header>
+            </hgroup>
+            <p><a href="https://www.printables.com/model/641490">Download the test model</a></p>
+        </article>
+        <article>
+            <h2>2. Slice & Export</h2>
+            <ol>
+                <li>Import it into Prusa Slicer and place in the middle of the bed.</li>
+                <li>Slice this model with your preferred slicer settings
+                    <ul>
+                        <li>Select the filament preset that you want to tune</li>
+                        <li>Use the printing preset that you want to tune for</li>
+                        <li>If using a multi-tool printer (XL) select the tool that has the filament in it</li>
+                    </ul>
+                </li>
+                <li>Export the GCode. <br/><em>You must turn off binary GCode Generation. Print Settings → Output Options → Export as Binary Gcode. Make sure this option is unchecked.</em></li>
+            </ol>
+        </article>
+        <article>
+            <header>
+                <h2>3. Generate Test Pattern</h2>
+                <p>We will use your exported <code>.gcode</code> to find your printers start/end gcode and the slicers settings</p>
+            </header>
+            <section class="drop-target">
+                <form>
+                    <fieldset>
+                        Drag & drop the exported <code>.gcode</code> here or
+                        <span><input id="browse-files-input" type="file" name="browse" value="Browse..."/><span>
+                    </fieldset>
+                </form>
+                <p>Reading: <code id="gcode-file-display" hidden></code></p>
+                <section class="error" id="gcode-error-display" hidden></section>
+                <section class="success" id="gcode-success-display" hidden></section>
+                <details id="prusa-slicer-details" class="contrast" hidden>
+                    <summary>Detected Prusa Slicer Settings</summary>
+                    <table class="striped">
+                        <tbody id="gcode-details"></tbody>
+                    </table>
+                </details>
+            </section>
+            <div id="gcode-results" hidden>
+                <section id="tweaks">
+                        <form id="pressure-advance-tweaks-form">
+                            <fieldset>
+                                <legend><h3>Select Pressure Advance Testing Range</h3></legend>
+                                <div>
+                                    <label for="direct-drive">
+                                        <div class="grid">
+                                            <div><input name="ADVANCE" value="direct-drive" type="radio"/>Direct Drive Extruders:</div>
+                                            <div><code>0</code> to <code>0.2</code> in steps of <code>0.01</code></div>
+                                            <div></div>
+                                        </div>
+                                    </label>
+                                </div>
+                                <div>
+                                    <label for="bowden">
+                                        <div class="grid">
+                                            <div><input name="ADVANCE" value="bowden" type="radio" />Bowden Extruders:</div>
+                                            <div><code>0</code> to <code>2</code> in steps of <code>0.1</code></div>
+                                            <div></div>
+                                        </div>
+                                    </label>
+                                </div>
+                                <div>
+                                    <label for="custom">
+                                        <div class="grid">
+                                            <div><input name="ADVANCE" value="custom" type="radio" />Custom</div>
+                                            <div>
+                                                <fieldset id="custom-pressure-advance-fields" disabled>
+                                                    <div class="grid">
+                                                        <div>
+                                                            <label for="ADVANCE_START">From
+                                                                <input name="ADVANCE_START" id="ADVANCE_START" step="any" value="0" maxlength="4" size="4"/>
+                                                            </label>
+                                                        </div>
+                                                        <div>
+                                                            <label for="ADVANCE_END">to
+                                                                <input name="ADVANCE_END" id="ADVANCE_END" step="any" value="0.2"  maxlength="4" size="4"/>
+                                                            </label>
+                                                        </div>
+                                                        <div>
+                                                            <label for="ADVANCE_STEP">in steps of
+                                                                <input name="ADVANCE_STEP" id="ADVANCE_STEP" step="any" value="0.01"  maxlength="5" size="5"/>
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                </fieldset>
+                                            </div>
+                                            <div></div>
+                                        </div>
+                                    </label>
+                                </div>
+                                <section class="error" id="parameter-error-display" hidden></section>
+                            </fieldset>
+                        </form>
+                    </section>
+                <section>
+                    <button class="action-button" name="download-button" id="download-button" disabled="disabled" value="">💾 Download Calibration GCode</button>
+                </section>
+            </div>
+        </article>
+    
+        <article>
+            <header>
+                <hgroup>
+                    <h2>4. Print It</h2>
+                    <p>Print the GCode on your printer.</p>
+                </hgroup>
+            </header>
+            <p>There is no easy way to send raw GCode to a Prusa printer right now, so put it on the USB stick.</p>
+            <p>Follow <a href="https://help.prusa3d.com/article/linear-advance_2252">this guide</a> to find the best Pressure Advance Value. The guide is older but it has good pictures and information on what to look for.</p>
+        </article>
+    
+        <article>
+            <header>
+                <hgroup>
+                    <h2>5. Update Filament GCode</h2>
+                    <p>Fill in the best value here and copy the code to your filament's starting GCode</p>
+                </hgroup>
+            </header>
+            <form id="filament-gcode-form">
+                <fieldset disabled>
+                    <label for="direct-drive">
+                        <div class="grid">
+                            <div>
+                                <label for="pressure-advance">
+                                    Best Pressure Advance:
+                                    <input type="text" name="pressure-advance" id="pressure-advance-input" value="0.5"/>
+                                </label>
+                            </div>
+                            <div></div>
+                        </div>
+                    </label>
+                    <div class="grid">
+                        <div>
+                            <pre>
+                                <code id="pressure-advance-code-block">please provide .gocde</code>
+                            </pre>
+                        </div>
+                        <div>
+                            <button id="copy-button">Copy to 📋</button>
+                        </div>
+                    </div>
+                </fieldset>
+            </form>
+        </article>
+    
+        <footer>
+            <section>
+                <h3>Credits</h3>
+                This is based on the original <a href="https://marlinfw.org/tools/lin_advance/k-factor.html">Marlin K-factor Calibration Pattern</a> by Sinos. Many thanks and sorry for taking a hacksaw to your work.
+                <h3>License</h3>
+                GPLV3
+            </section>
+        </footer>
+    </main>
+
+
+    <script src="https://cdn.jsdelivr.net/npm/umbrellajs"></script>
+    <script src="./js/FileSaver.js"></script>
+    <script src="./js/pressure-advance.js"></script>
+    <script src="./js/ux.js"></script>
+</body>
+<html>
