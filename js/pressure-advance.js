@@ -42,7 +42,6 @@ function validateAdvanceParameters(calibrationParams) {
         decimals = getDecimals(ADVANCE_STEP);
 
     // parameters wont result in a whole number of steps
-    // TODO: maybe we could change this to start, stepSize and steps... so people don't have to think about this one
     if (((round10(ADVANCE_END - ADVANCE_START, -3) * Math.pow(10, decimals)) % (ADVANCE_STEP * Math.pow(10, decimals))) !== 0) {
         throw `Pressure Advance Step (${ADVANCE_STEP}) does not divide the test range (from ${ADVANCE_START} to ${ADVANCE_END}) evenly`;
     }

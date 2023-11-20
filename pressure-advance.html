@@ -16,6 +16,15 @@
             padding-bottom: 8px;
         }
 
+        :root {
+            --pico-font-size: 90%;
+            /* Override Pico's default spacing */
+            --pico-spacing: 0.25rem;
+            --pico-typography-spacing-vertical: 0.5rem;
+            --pico-block-spacing-vertical: calc(var(--pico-spacing) * 5.0);
+            --pico-block-spacing-horizontal: calc(var(--pico-spacing * 4));
+        }
+
         /* Prusa color for light color scheme (Default) */
         /* Can be forced with data-theme="light" */
         [data-theme=light],

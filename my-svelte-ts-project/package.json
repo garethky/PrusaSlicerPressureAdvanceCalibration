@@ -1,0 +1,28 @@
+{
+  "name": "my-svelte-ts-project",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "check": "svelte-check --tsconfig ./tsconfig.json"
+  },
+  "devDependencies": {
+    "@sveltejs/vite-plugin-svelte": "^3.0.0",
+    "@tsconfig/svelte": "^5.0.2",
+    "svelte": "^4.2.3",
+    "svelte-check": "^3.6.0",
+    "tslib": "^2.6.2",
+    "typescript": "^5.2.2",
+    "vite": "^5.0.0"
+  },
+  "dependencies": {
+    "svelte-forms": "^2.3.1",
+    "big.js": "^6.2.1",
+    "@types/big.js": "^6.2.2",
+    "file-saver": "^2.0.5",
+    "@types/file-saver": "^2.0.7"
+  }
+}

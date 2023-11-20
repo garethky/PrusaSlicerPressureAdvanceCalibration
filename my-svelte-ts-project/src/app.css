@@ -1,0 +1,92 @@
+article h2, article h3, article h4, article h5, article h6 {
+  border-bottom: 3px solid #fa6831;
+  padding-bottom: 8px;
+}
+
+:root {
+  --pico-font-size: 90%;
+  /* Override Pico's default spacing */
+  --pico-spacing: 0.25rem;
+  --pico-typography-spacing-vertical: 0.5rem;
+  --pico-block-spacing-vertical: calc(var(--pico-spacing) * 5.0);
+  --pico-block-spacing-horizontal: calc(var(--pico-spacing * 4));
+}
+
+/* Prusa color for light color scheme (Default) */
+/* Can be forced with data-theme="light" */
+[data-theme=light],
+:root:not([data-theme=dark]) {
+/*--pico-text-selection-color: rgba(210, 122, 1, 0.25);*/
+--pico-primary: #9c5900;
+--pico-primary-background: rgb(250, 104, 49);
+--pico-primary-underline: rgba(156, 89, 0, 0.5);
+--pico-primary-hover: #7a4400;
+--pico-primary-hover-background: #e48500;
+--pico-primary-focus: rgba(210, 122, 1, 0.25);
+--pico-primary-inverse: #000;
+--pico-switch-color: var(--pico-secondary-hover);
+}
+
+/* Prusa color for dark color scheme (Auto) */
+/* Automatically enabled if user has Dark mode enabled */
+@media only screen and (prefers-color-scheme: dark) {
+:root:not([data-theme]) {
+  /*--pico-text-selection-color: rgba(228, 133, 0, 0.1875);*/
+  --pico-primary: #e48500;
+  --pico-primary-background: rgb(250, 104, 49);
+  --pico-primary-underline: rgba(228, 133, 0, 0.5);
+  --pico-primary-hover: #ffa23a;
+  --pico-primary-hover-background: #ffa23a;
+  --pico-primary-focus: rgba(228, 133, 0, 0.25);
+  --pico-primary-inverse: #000;
+  --pico-switch-color: var(--pico-background-color);
+}
+}
+
+/* Prusa color for dark color scheme (Forced) */
+/* Enabled if forced with data-theme="dark" */
+[data-theme=dark] {
+/*--pico-text-selection-color: rgba(228, 133, 0, 0.1875);*/
+--pico-primary: #e48500;
+--pico-primary-background: rgb(250, 104, 49);
+--pico-primary-underline: rgba(228, 133, 0, 0.5);
+--pico-primary-hover: #ffa23a;
+--pico-primary-hover-background: #ffa23a;
+--pico-primary-focus: rgba(228, 133, 0, 0.25);
+--pico-primary-inverse: #000;
+--pico-switch-color: var(--pico-background-color);
+}
+
+
+/* Pico Admonition/Alert Boxes */
+/* based on https://codepen.io/mjau-mjau/pen/xxjZRGg but changed to use CSS variables*/
+/* see issue: https://github.com/picocss/pico/issues/12 */
+.alert {
+  --iconsize: calc(var(--pico-font-size) *  1.5); /* 24px / 30px if $enable-responsive-spacings */
+  margin-bottom: var(--pico-spacing); /* some default space below alert element */
+  padding: var(--pico-form-element-spacing-vertical) var(--pico-form-element-spacing-horizontal); /* same as forms .input */
+  border-radius: var(--pico-border-radius);
+  color: var(--color);
+  background-color: var(--background-color);
+  border: 1px solid var(--background-color); /* compensate for 1px border*/
+
+  /* icon */
+  background-image: var(--icon);
+  background-position: center left var(--pico-form-element-spacing-vertical); /* use vertical for icon left align */
+  padding-left: calc(var(--pico-form-element-spacing-horizontal) * 3);
+}
+.alert-error {
+  --background-color: var(--pico-color-red-50);
+  --icon: var(--pico-icon-invalid);
+  --color: var(--pico-color-red-750);
+}
+.alert-warning {
+  --background-color: var(--pico-color-yellow-50);
+  --icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='rgb(151, 112, 0)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'%3E%3C/circle%3E%3Cline x1='12' y1='8' x2='12' y2='12'%3E%3C/line%3E%3Cline x1='12' y1='16' x2='12.01' y2='16'%3E%3C/line%3E%3C/svg%3E");
+  --color: var(--pico-color-amber-650);
+}
+.alert-success {
+  --background-color: var(--pico-color-green-50);
+  --icon: var(--pico-icon-valid);
+  --color: var(--pico-color-green-800);
+}
