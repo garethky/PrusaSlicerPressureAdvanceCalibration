@@ -43,7 +43,7 @@ jobs:
         uses: actions/upload-pages-artifact@v2
         with:
           # Upload contents of the build output directory:
-          path: 'dist/'
+          path: 'build/'
   deploy:
     needs: build
     runs-on: ubuntu-latest
