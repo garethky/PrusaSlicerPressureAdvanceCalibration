@@ -24,9 +24,6 @@ concurrency:
 jobs:
   # Build Svelte codebase
   build:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -42,16 +39,21 @@ jobs:
           BASE_PATH: '/${{ github.event.repository.name }}'
         run: |
           npm run build
-      # Deploy static assets to github pages
-      - name: Setup Pages
-        uses: actions/configure-pages@v3
-      - name: Upload artifact
+      - name: Upload Artifact
         uses: actions/upload-pages-artifact@v2
         with:
           # Upload contents of the build output directory:
           path: 'dist/'
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v2
-  
-      
