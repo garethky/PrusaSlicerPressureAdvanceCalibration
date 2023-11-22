@@ -8,6 +8,7 @@ export default {
   dev: true,
   kit: {
 		adapter: adapter({
+      pages: 'build',
 			paths: {
         base: process.env.NODE_ENV === "production" ? "/PrusaSlicerPressureAdvanceCalibration" : "",
       },
