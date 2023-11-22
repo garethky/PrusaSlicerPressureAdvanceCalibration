@@ -19,10 +19,11 @@
     "vite": "^5.0.0"
   },
   "dependencies": {
-    "svelte-forms": "^2.3.1",
-    "big.js": "^6.2.1",
+    "@picocss/pico": "^2.0.0-alpha1",
     "@types/big.js": "^6.2.2",
+    "@types/file-saver": "^2.0.7",
+    "big.js": "^6.2.1",
     "file-saver": "^2.0.5",
-    "@types/file-saver": "^2.0.7"
+    "svelte-forms": "^2.3.1"
   }
 }

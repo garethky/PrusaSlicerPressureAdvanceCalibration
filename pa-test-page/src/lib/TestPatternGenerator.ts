@@ -287,6 +287,15 @@ export function generateTestPattern(calibrationParams: TestPatternConfiguration)
   return k_script;
 }
 
+// TODO: emit M73 to drive completion UI in printers
+// https://help.prusa3d.com/article/prusa-firmware-specific-g-codes_112173 - supports P and R
+// https://marlinfw.org/docs/gcode/M073.html - supports P and R
+// https://docs.duet3d.com/User_manual/Reference/Gcodes#m73-set-remaining-print-time only supports R = remainig print time
+// https://www.klipper3d.org/G-Codes.html - only supports P = percent
+function setProgress(percent: number) {
+    return `M73 P${percent} R${5.0 / percent} ; Print progress\n`;
+}
+
 // Decimal round
 function roundDecimal(value: number, exp: number): number {
     let bigVal = new Big(value);

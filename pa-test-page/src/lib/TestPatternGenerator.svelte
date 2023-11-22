@@ -20,7 +20,7 @@
         let file: Array<string> = [];
         let toolIndex: number = $gcodeStore.requiredSettings?.perimeter_extruder.toValue() as number;
         let temp: number = $testPatternConfigStore.filament_temperature.value
-        prepareStartGcode($gcodeStore.startLines, temp, toolIndex);
+        prepareStartGcode($gcodeStore.startLines, $gcodeStore.requiredSettings);
         file.push(...$gcodeStore.startLines);
         file.push(generateTestPattern($testPatternConfigStore));
         file.push(...$gcodeStore?.endLines);
