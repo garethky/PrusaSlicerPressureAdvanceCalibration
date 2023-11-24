@@ -117,6 +117,7 @@ export function generateTestPattern(calibrationParams: TestPatternConfiguration)
     // convert mm/s to mm/minute
     SPEED_SLOW *= 60;
     SPEED_FAST *= 60;
+    SPEED_PRINT *= 60;
     TRAVEL_SPEED *= 60;
     TRAVEL_SPEED_Z *= 60;
     RETRACT_SPEED *= 60;
