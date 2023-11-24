@@ -12,7 +12,7 @@ const config = {
 		// If your environment is not supported or you settled on a specific environment, switch out the adapter.
 		// See https://kit.svelte.dev/docs/adapters for more information about adapters.
 		adapter: adapter({
-			pages: 'build',
+			pages: process.argv.includes('development') ? 'build/dev' : 'build',
 			//fallback: 'index.html', // may differ from host to host
 			paths: {
 				base: process.argv.includes('dev') ? '' : process.env.BASE_PATH

@@ -366,6 +366,9 @@ export class GCodeProcessor {
     constructor(file: File, onComplete: () => void) {
         this.fileName = file.name;
         this.fileExtension = this.#extractExtension();
+        if (this.fileExtension === '.bgcode') {
+            this.errors.push('Binary Gcode files are not supported. Please disable binary gcode in the slicer and export plain text gcode.');
+        }
         const reader = new FileReader();
         let self = this;
         reader.onload = function(event) {
@@ -387,7 +390,7 @@ export class GCodeProcessor {
     #extractExtension(): string {
         let dotIndex = this.fileName.lastIndexOf('.');
         // TODO: if file name ends with '.bgcode' complain about binary gcode
-        return this.fileName.substring(dotIndex + 1);
+        return this.fileName.substring(dotIndex);
     }
 
     #processContents(gcode: string) {
@@ -426,6 +429,7 @@ export class GCodeProcessor {
             }
         }
         this.errors.push("Could not find the last line of the start gcode block. Missing <code>;AFTER_LAYER_CHANGE</code> comment. Check in the printers custom gcode settings.");
+        console.log(this.errors);
         return [];
     }
     

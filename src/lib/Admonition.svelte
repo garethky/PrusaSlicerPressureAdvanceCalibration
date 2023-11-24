@@ -5,6 +5,6 @@
 </script>
 
 {#if message }
-    <div class="alert alert-{type}" role="alert">{message}</div>
+    <div class="alert alert-{type}" role="alert">{@html message}</div>
 {/if}
 

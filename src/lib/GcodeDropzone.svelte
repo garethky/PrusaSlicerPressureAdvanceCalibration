@@ -38,16 +38,15 @@
         }
         else if (files.length === 1) {
             gcodeStore.parseFile(files[0]);
+            
         } else {
             uploadError = "Multiple files found, please only drop 1 file.";
         }
     }
 
     $: {
-
-        if ($gcodeStore?.requiredSettings?.hasErrors === false) {
-            uploadSuccess = "GCode file looks good!";
-        }
+        let filename = $gcodeStore?.fileName;
+        uploadSuccess = `GCode file Uploaded: <code>${filename}</code>`;
     }
 </script>
 
@@ -58,14 +57,17 @@
                 <input class="dropzone" type="file" name="browse"/>
                 <div class="dropzone-prompt">
                     <strong>Click to Upload</strong> a <code>.gcode</code> file or drag and drop here.
+                    <Admonition type="success" message="{uploadSuccess}"/>
+                    <Admonition type="error" message={uploadError} />
                 </div>
             </div>
         </fieldset>
     </form>
-    
-    
-    <Admonition type="error" message={uploadError} />
-    <Admonition type="success" message="{uploadSuccess}"/>
+    {#if $gcodeStore?.errors }
+        {#each $gcodeStore.errors as error }
+            <Admonition type="error" message={error} />
+        {/each}
+    {/if}
     <details open={$gcodeStore?.hasErrors} hidden={$gcodeStore == null}>
         <summary>Detected Prusa Slicer Settings</summary>
         <table class="">
