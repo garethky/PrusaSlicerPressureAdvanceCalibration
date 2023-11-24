@@ -46,7 +46,9 @@
 
     $: {
         let filename = $gcodeStore?.fileName;
-        uploadSuccess = `GCode file Uploaded: <code>${filename}</code>`;
+        if (filename) {
+            uploadSuccess = `GCode file Uploaded: <code>${filename}</code>`;
+        }
     }
 </script>
 
