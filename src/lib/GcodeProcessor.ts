@@ -182,6 +182,7 @@ class RequiredSettingsDescriptors {
     solid_infill_acceleration: SettingsDescriptor<number> = new SettingsDescriptor('solid_infill_acceleration', parseSingleInt, describeMmsSquared, true);
     top_solid_infill_acceleration: SettingsDescriptor<number> = new SettingsDescriptor('top_solid_infill_acceleration', parseSingleInt, describeMmsSquared, true);
     travel_acceleration: SettingsDescriptor<number> = new SettingsDescriptor('travel_acceleration', parseSingleInt, describeMmsSquared, true);
+    default_acceleration: SettingsDescriptor<number> = new SettingsDescriptor('default_acceleration', parseSingleInt, describeMmsSquared, true);
 
     // speeds
     infill_speed: SettingsDescriptor<number> = new SettingsDescriptor('infill_speed', parseSingleFloat, describeMms, true);
@@ -245,6 +246,7 @@ export class RequiredSlicerSettings {
     solid_infill_acceleration: SettingValue<number>;
     top_solid_infill_acceleration: SettingValue<number>;
     travel_acceleration: SettingValue<number>;
+    default_acceleration: SettingValue<number>;
     perimeter_extrusion_width: SettingValue<number>;
     perimeter_speed: SettingValue<number>;
     travel_speed: SettingValue<number>;
@@ -325,6 +327,7 @@ export class RequiredSlicerSettings {
         this.solid_infill_acceleration = this.#toValue(foundSettings, descriptors.solid_infill_acceleration);
         this.top_solid_infill_acceleration = this.#toValue(foundSettings, descriptors.top_solid_infill_acceleration);
         this.travel_acceleration = this.#toValue(foundSettings, descriptors.travel_acceleration);
+        this.default_acceleration = this.#toValue(foundSettings, descriptors.default_acceleration);
         this.perimeter_extrusion_width = this.#toValue(foundSettings, descriptors.perimeter_extrusion_width);
         this.perimeter_speed = this.#toValue(foundSettings, descriptors.perimeter_speed);
         this.solid_infill_speed = this.#toValue(foundSettings, descriptors.solid_infill_speed);

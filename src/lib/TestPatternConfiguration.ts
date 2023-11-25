@@ -233,7 +233,7 @@ export class TestPatternConfiguration {
         this.zHopHeight = simpleExplainedValue('Z-Hop Height', slicerSettings.retract_lift);
 
         // speeds
-        this.travelAcceleration = simpleExplainedValue('Travel Acceleration', slicerSettings.travel_acceleration);
+        this.travelAcceleration = simpleExplainedValue('Travel Acceleration', slicerSettings.travel_acceleration.toValue() > 0 ? slicerSettings.travel_acceleration : slicerSettings.default_acceleration);
         this.testAcceleration = maxExplainedValue('Test Acceleration', [slicerSettings.perimeter_acceleration, slicerSettings.infill_acceleration, slicerSettings.solid_infill_acceleration, slicerSettings.top_solid_infill_acceleration, slicerSettings.external_perimeter_acceleration]);
         this.printAcceleration = simpleExplainedValue('Print Acceleration', slicerSettings.first_layer_acceleration);
         

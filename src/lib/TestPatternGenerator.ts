@@ -199,7 +199,9 @@ export function generateTestPattern(calibrationParams: TestPatternConfiguration)
                     `; Travel Speed = ${TRAVEL_SPEED} mm/min\n` +
                     `; Retract Speed = ${RETRACT_SPEED} mm/min\n` +
                     `; Unretract Speed = ${UNRETRACT_SPEED} mm/min\n` +
-                    //`; Printing Acceleration = ${ACCELERATION} mm/s^2\n` +
+                    `; Printing Acceleration = ${PRINT_ACCELERATION} mm/s^2\n` +
+                    `; Test Acceleration = ${TEST_ACCELERATION} mm/s^2\n` +
+                    `; Travel Acceleration = ${TRAVEL_ACCELERATION} mm/s^2\n` +
                     `;\n` +
                     `; Settings Pattern:\n` +
                     `; Test Line Spacing = ${LINE_SPACING} mm\n` +
@@ -207,7 +209,7 @@ export function generateTestPattern(calibrationParams: TestPatternConfiguration)
                     `; Test Line Length Fast = ${LENGTH_FAST} mm\n` +
                     `; Print Size X = ${FIT_WIDTH} mm\n` +
                     `; Print Size Y = ${FIT_HEIGHT} mm\n` +
-                    `; Print Rotation = ${PRINT_DIR} degree\n` +
+                    //`; Print Rotation = ${PRINT_DIR} degree\n` +
                     `;\n` +
                     `; -------------------------------------------------\n\n` +
                     `G92 E0 ; Reset extruder distance\n` +
