@@ -59,7 +59,6 @@ export class NumericField {
 
     increment(by: number) {
         if (!this.isNumeric) {
-            console.log('not numeric!');
             throw "NumericField value is not numberic, cannot perform arithamtic on non-numeric value";
         }
         this.value = '' + parseFloat(parseFloat('' + (this.numericValue + by)).toFixed(this.maxDecimals));

@@ -7,7 +7,6 @@
     let uploadSuccess: string | null = null;
   
     function onDrop(dropEvent: DragEvent) {
-        console.log(dropEvent);
         uploadError = null;
         uploadSuccess = null;
 
@@ -45,7 +44,6 @@
     }
 
     function onFileInput(event: any) {
-        console.log(event.target.files);
         const files: File[] = event.target.files;
         if (files.length === 0) {
             uploadError = "No Files Found";

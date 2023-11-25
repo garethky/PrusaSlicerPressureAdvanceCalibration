@@ -434,7 +434,6 @@ export class GcodeProcessor {
             }
         }
         this.errors.push("Could not find the last line of the start gcode block. Missing <code>;AFTER_LAYER_CHANGE</code> comment. Check in the printers custom gcode settings.");
-        console.log(this.errors);
         return [];
     }
     

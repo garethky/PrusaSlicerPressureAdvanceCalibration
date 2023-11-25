@@ -282,7 +282,6 @@ export function generateTestPattern(calibrationParams: TestPatternConfiguration)
         var paValue = ADVANCE_LINES[stepping];
         // only print glyphs on every other line
         if (stepping % 2 === 0) {
-            console.log('print ', paValue);
             k_script += moveTo(numStartX, numStartY + (stepping * LINE_SPACING), basicSettings) +
                         zHop(basicSettings) +
                         doEfeed('+', basicSettings) +

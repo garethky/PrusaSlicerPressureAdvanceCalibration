@@ -50,7 +50,7 @@ export class PressureAdvanceModel {
             this.#calculateLines(start, end);
             return true;
         } else {
-            console.log('range has an error!');
+            return false;
         }
     }
 

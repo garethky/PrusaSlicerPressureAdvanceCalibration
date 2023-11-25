@@ -111,7 +111,6 @@ export function readBlock(line: string, startIndex: number): [false | Block | Sc
         let nextChar = line.charAt(i);
         if (nextChar === '[' || nextChar === '{') {
             // break for start of script block
-            console.log('block ended at', nextChar);
             return [new Block(line.substring(startIndex, i)), i];
         }
     }
