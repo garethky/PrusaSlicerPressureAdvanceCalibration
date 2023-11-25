@@ -1,7 +1,6 @@
 # PrusaSlicerPressureAdvanceCalibration
 A web tool that modifies PrusaSlicer GCode to add a pressure advance test pattern.
 
-[Grab the model from Printables](https://www.printables.com/model/641490)
 [Go here to use the tool](https://garethky.github.io/PrusaSlicerPressureAdvanceCalibration/)
 
 ## Status : Alpha
