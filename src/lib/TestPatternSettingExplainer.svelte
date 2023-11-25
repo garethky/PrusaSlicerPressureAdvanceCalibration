@@ -55,6 +55,8 @@
             </li>
         {:else if setting.explanation instanceof SettingValue }
             <code>{setting.explanation.key}</code>
+        {:else if typeof setting.explanation === 'string' }
+            {setting.explanation}
         {:else}
             <Admonition type="warning" message="You still have some code to write!"/>
         {/if}

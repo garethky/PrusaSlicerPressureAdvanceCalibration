@@ -1,4 +1,4 @@
-import { SettingValue } from "./GcodeProcessor";
+import type { SettingValue } from "./GcodeProcessor";
 
 export class ExplanationStartGCode {
     value: string;

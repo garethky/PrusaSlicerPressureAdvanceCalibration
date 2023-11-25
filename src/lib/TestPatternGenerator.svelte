@@ -6,7 +6,6 @@
     import { generateTestPattern } from "./TestPatternGenerator";
     import FileSaver from "file-saver";
     import TestPatternSettingExplainer from "./TestPatternSettingExplainer.svelte";
-  import { prepareStartGcode } from "./StartGcodePrep";
 
     let canDownload: boolean = false;
     let error: string | null = null;
@@ -14,16 +13,13 @@
     let settings: RequiredSlicerSettings | null = null;
 
     function downloadGcode() {
-        if (!$testPatternConfigStore || !$gcodeStore) {
+        if (!$testPatternConfigStore) {
             throw "illegal state exception";
         }
         let file: Array<string> = [];
-        let toolIndex: number = $gcodeStore.requiredSettings?.perimeter_extruder.toValue() as number;
-        let temp: number = $testPatternConfigStore.filament_temperature.value
-        prepareStartGcode($gcodeStore.startLines, $gcodeStore.requiredSettings as RequiredSlicerSettings, $testPatternConfigStore);
-        file.push(...$gcodeStore.startLines);
+        file.push(...$testPatternConfigStore.startLines);
         file.push(generateTestPattern($testPatternConfigStore));
-        file.push(...$gcodeStore?.endLines);
+        file.push(...$testPatternConfigStore.endLines);
         let blob = new Blob([file.join('\n')], {type: 'text/plain'});
         FileSaver(blob, filename);
     }
@@ -36,9 +32,9 @@
             if (requiredSettings && $gcodeStore?.hasErrors == false) {
                 settings = requiredSettings;
                 try {
-                    $testPatternConfigStore = new TestPatternConfiguration(requiredSettings, $pressureAdvanceStore);
+                    $testPatternConfigStore = new TestPatternConfiguration($gcodeStore, requiredSettings, $pressureAdvanceStore);
                     canDownload = true;
-                    filename = `PA-Test_${requiredSettings.printer_model.displayValue}_${requiredSettings.filament_settings_id.displayValue}_${$pressureAdvanceStore.start}_${$pressureAdvanceStore.end}.gcode`;
+                    filename = `PA-Test_${requiredSettings.printer_model.displayValue}_${requiredSettings.filament_settings_id.displayValue}_PA_${$pressureAdvanceStore.start}-to-${$pressureAdvanceStore.end}.gcode`;
                 }
                 catch (ex) {
                     error = "Test pattern generation failed: " + ex;
@@ -72,6 +68,7 @@
         <TestPatternSettingExplainer setting={$testPatternConfigStore.bed_shape} />
         <TestPatternSettingExplainer setting={$testPatternConfigStore.bed_x} />
         <TestPatternSettingExplainer setting={$testPatternConfigStore.bed_y} />
+        <TestPatternSettingExplainer setting={$testPatternConfigStore.print_area} />
         <!-- Filament-->
         <tr><td colspan="3"><h4>Filament</h4></td></tr>
         <TestPatternSettingExplainer setting={$testPatternConfigStore.filament} />

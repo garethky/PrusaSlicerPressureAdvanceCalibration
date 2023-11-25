@@ -162,6 +162,7 @@ class RequiredSettingsDescriptors {
     perimeter_extruder: SettingsDescriptor<number> = new SettingsDescriptor('perimeter_extruder', parseSingleInt, describeNumber, true);
     printer_model: SettingsDescriptor<string> = new SettingsDescriptor('printer_model', parseString, describeString, true);
     gcode_flavor: SettingsDescriptor<string> = new SettingsDescriptor('gcode_flavor', parseString, describeString, true);
+    start_gcode: SettingsDescriptor<string> = new SettingsDescriptor('start_gcode', parseString, describeString, true);
     filament_settings_id: SettingsDescriptor<string> = new SettingsDescriptor('filament_settings_id', parseToolString, describeString, true);
     bed_shape: SettingsDescriptor<BedShape> = new SettingsDescriptor('bed_shape', parseBedShape, describeBedShape, true);
     nozzle_diameter: SettingsDescriptor<number> = new SettingsDescriptor('nozzle_diameter', parseToolFloat, describeMm, true);
@@ -265,6 +266,7 @@ export class RequiredSlicerSettings {
     top_solid_infill_speed: SettingValue<number>;
     max_volumetric_speed: SettingValue<number>;
     filament_max_volumetric_speed: SettingValue<number>;
+    start_gcode: SettingValue<string>;
 
     #toValue<T>(foundSettings: Map<string, string>, descriptor: SettingsDescriptor<T>): SettingValue<T> {
         const toolNumber: number | null = this?.perimeter_extruder?.value;
@@ -336,6 +338,7 @@ export class RequiredSlicerSettings {
         this.infill_speed = this.#toValue(foundSettings, descriptors.infill_speed);
         this.max_volumetric_speed = this.#toValue(foundSettings, descriptors.max_volumetric_speed);
         this.filament_max_volumetric_speed = this.#toValue(foundSettings, descriptors.filament_max_volumetric_speed);
+        this.start_gcode = this.#toValue(foundSettings, descriptors.start_gcode);
         // concat all errors
         this.#allErrors.forEach(val => { this.errors.push(...val) });
         this.errorCount = this.errors.length;
@@ -349,10 +352,9 @@ export class RequiredSlicerSettings {
  *  - identifying all of the settings in the settings block
  *  - identifying the start and end gcode
  *  - holding the above as state.
- *  - cleaning out any 'propriatary' Prusa comments 🤬🤬
+ *  - cleaning out any 'proprietary' Prusa comments 🤬🤬
  */
-export class GCodeProcessor {
-    
+export class GcodeProcessor {
     allLines: Array<string> = [];
     startLines: Array<string> = [];
     endLines: Array<string> = [];
@@ -450,10 +452,11 @@ export class GCodeProcessor {
 }
 
 import { writable } from "svelte/store";
+  import type { TestPatternConfiguration } from "./TestPatternConfiguration";
 
 
 function createGCodeProcessorStore() {
-    const { subscribe, set, update } = writable<GCodeProcessor | null>(null);
+    const { subscribe, set, update } = writable<GcodeProcessor | null>(null);
 
     // called when the file has been parsed, this triggers a notification on the store
     function onComplete() {
@@ -461,7 +464,7 @@ function createGCodeProcessorStore() {
     }
 
     function parseFile(file: File) {
-        set(new GCodeProcessor(file, onComplete));
+        set(new GcodeProcessor(file, onComplete));
     }
 
     return {

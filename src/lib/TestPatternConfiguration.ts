@@ -1,7 +1,28 @@
 import { writable } from 'svelte/store';
-import type { RequiredSlicerSettings, SettingValue } from './GcodeProcessor';
+import type { GcodeProcessor, RequiredSlicerSettings, SettingValue } from './GcodeProcessor';
 import type { PressureAdvanceModel } from './PressureAdvanceModel';
 import {type Explanation, ExplanationMaxOf, ExplanationVolumetricFlow, ExplanationSumOf, ExplanationFanSpeed, ExplanationPaGcode, ExplanationArray } from './TestPatternSettingExplainer';
+import { validatePatternConfig } from './TestPatternGenerator';
+import { prepareStartEndGcode } from './StartEndGcodePrep';
+
+export class PrintArea {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+    errors: Array<string> = [];
+
+    constructor(x: number, y: number, width: number, height: number) {
+        this.x = x;
+        this.y = y;
+        this.width = width;
+        this.height = height;
+    }
+
+    description() {
+        return `Start Location: x: ${this.x}mm, y:${this.y}, Width: ${this.width}mm, Height: ${this.height}mm`;
+    }
+}
 
 type PressureAdvanceGCode = {
     // this is the stirng that contains just the co with no arguments for display
@@ -182,14 +203,17 @@ export class TestPatternConfiguration {
     zHopHeight: ExplainedValue<number>;
     advance_step: number;
     advance_lines: ExplainedValue<Array<number>>;
+    print_area: ExplainedValue<PrintArea>;
     print_dir: number = 0.0;
     length_slow: number = 25;
     length_fast: number = 100;
     z_offset: number = 0.0;
     null_center: boolean = false;
+    startLines: string[];
+    endLines: string[];
     
 
-    constructor(slicerSettings: RequiredSlicerSettings, paModel: PressureAdvanceModel) {
+    constructor(gcodeStore: GcodeProcessor, slicerSettings: RequiredSlicerSettings, paModel: PressureAdvanceModel) {
         this.printer = simpleExplainedValue( 'Printer', slicerSettings.printer_model);
         this.filament = simpleExplainedValue('Filament Preset', slicerSettings.filament_settings_id);
 
@@ -217,7 +241,8 @@ export class TestPatternConfiguration {
         this.speed_slow = simpleExplainedValue('Test Slow Extrusion Speed', slicerSettings.first_layer_speed);
         this.speed_fast = explainMaxSpeed(slicerSettings);
         this.speed_move = simpleExplainedValue('Travel Speed', slicerSettings.travel_speed);
-        this.speed_move_z = simpleExplainedValue('Z Movement Speed', slicerSettings.travel_speed_z);
+        // if there is no z travel speed, fall back to normal travel speed
+        this.speed_move_z = simpleExplainedValue('Z Movement Speed', slicerSettings.travel_speed_z.toValue() > 0 ? slicerSettings.travel_speed_z : slicerSettings.travel_speed);
 
         // retractions
         this.retract_dist = filamentOverrideExplainedValue('Retract Length', slicerSettings.retract_length, slicerSettings.filament_retract_length);
@@ -244,6 +269,13 @@ export class TestPatternConfiguration {
         this.advance_step = paModel.step;
         let paModelString = `${paModel.lines.length} lines: ${paModel.lines[0]} ... ${paModel.lines[paModel.lines.length - 1]} in ${paModel.step} steps`;
         this.advance_lines = new ExplainedValue('Pressure Advance Test Values', paModel.lines, paModelString, new ExplanationArray(paModel.lines));
+
+        let printArea = validatePatternConfig(this);
+        this.print_area = new ExplainedValue("Print Area", printArea, printArea.description(), 'Calculated Print Area');
+
+        this.startLines = gcodeStore.startLines.slice(0);
+        this.endLines = gcodeStore.endLines.slice(0);
+        prepareStartEndGcode(slicerSettings, this);
     }
 }
 

@@ -1,6 +1,6 @@
 <script lang="ts">
     import Admonition from "./Admonition.svelte";
-    import {gcodeStore, SettingValue, GCodeProcessor, RequiredSlicerSettings } from "./GcodeProcessor";
+    import {gcodeStore, SettingValue, GcodeProcessor, RequiredSlicerSettings } from "./GcodeProcessor";
 
     let uploadError: string | null = null;
     let uploadSuccess: string | null = null;

@@ -1,5 +1,5 @@
-import type { GCodeProcessor } from './GcodeProcessor';
-import {TestPatternConfiguration} from './TestPatternConfiguration';
+import type { GcodeProcessor } from './GcodeProcessor';
+import { PrintArea, type TestPatternConfiguration } from './TestPatternConfiguration';
 import Big from 'big.js';
 
 /**
@@ -49,29 +49,34 @@ type PatternSettings = {
     lineSpacing: number
 };
 
-// Settings version of localStorage
-// Increase if default settings are changed / amended
-const SETTINGS_VERSION = '1.1';
+const LINE_SPACING: number =  4.0;
 
-const LINE_SPACING =  4.0;
-
-function validateAdvanceParameters(calibrationParams: TestPatternConfiguration) {
-    const sizeY = calibrationParams.advance_lines.value.length * LINE_SPACING + 25, // +25 with ref marking
+export function validatePatternConfig(calibrationParams: TestPatternConfiguration): PrintArea {
+    const 
+        centerX = (calibrationParams.null_center ? 0 : calibrationParams.bed_x.value / 2),
+        centerY = (calibrationParams.null_center ? 0 : calibrationParams.bed_y.value / 2),
         sizeX = (2 * calibrationParams.length_slow) + calibrationParams.length_fast + 8,
+        sizeY = calibrationParams.advance_lines.value.length * LINE_SPACING + 25, // +25 with ref marking
+        startX = centerX - (0.5 * calibrationParams.length_fast) - calibrationParams.length_slow - 4,
+        startY = centerY - (sizeY / 2),
         printDirRad = calibrationParams.print_dir * Math.PI / 180,
         fitWidth = roundDecimal(Math.abs(sizeX * Math.cos(printDirRad)) + Math.abs(sizeY * Math.sin(printDirRad)), 0),
         fitHeight = roundDecimal(Math.abs(sizeX * Math.sin(printDirRad)) + Math.abs(sizeY * Math.cos(printDirRad)), 0);
 
+    let printArea: PrintArea = new PrintArea(startX, startY, sizeX, sizeY);
     // print is too big for a round bed
     if (calibrationParams.bed_shape.value === 'Round') {
         if ((Math.sqrt(Math.pow(fitWidth, 2) + Math.pow(fitHeight, 2)) > calibrationParams.bed_x.value)) {
-            throw `TestPattern size (x: ${fitWidth}mm, y: ${fitHeight}mm) exceeds your bed's diameter (${calibrationParams.bed_x}mm).`;
+            printArea.errors.push(`TestPattern size (x: ${fitWidth}mm, y: ${fitHeight}mm) exceeds your bed's diameter (${calibrationParams.bed_x}mm).`);
         }
     }
+
     // print is too big for a square bed
     else if (fitWidth > calibrationParams.bed_x.value || fitHeight > calibrationParams.bed_y.value) {
-        throw `'Test pattern size (x: ${fitWidth}mm, y: ${fitHeight}mm) exceeds your bed's usable size (x: (${calibrationParams.bed_x}mm y: (${calibrationParams.bed_y}mm).'`;
+        printArea.errors.push(`'Test pattern size (x: ${fitWidth}mm, y: ${fitHeight}mm) exceeds your bed's usable size (x: (${calibrationParams.bed_x}mm y: (${calibrationParams.bed_y}mm).'`);
     }
+
+    return printArea;
 }
 
 export function generateTestPattern(calibrationParams: TestPatternConfiguration): string {
@@ -124,12 +129,11 @@ export function generateTestPattern(calibrationParams: TestPatternConfiguration)
     UNRETRACT_SPEED *= 60;
 
     var PRINT_SIZE_Y = (ADVANCE_LINES.length * LINE_SPACING) + 25, // +25 with ref marking
-        PRINT_SIZE_X = (2 * LENGTH_SLOW) + LENGTH_FAST  + 8,
+        PRINT_SIZE_X = (2 * LENGTH_SLOW) + LENGTH_FAST  + 8,  // this cant be wide enough to account for the frame + numbers
         CENTER_X = (NULL_CENTER ? 0 : BED_X / 2),
         CENTER_Y = (NULL_CENTER ? 0 : BED_Y / 2),
         PAT_START_X = CENTER_X - (0.5 * LENGTH_FAST) - LENGTH_SLOW - 4,
         PAT_START_Y = CENTER_Y - (PRINT_SIZE_Y / 2),
-        //LINE_WIDTH = NOZZLE_DIAMETER * NOZZLE_LINE_RATIO,
         EXTRUSION_RATIO = LINE_WIDTH * HEIGHT_LAYER / (Math.pow(FILAMENT_DIAMETER / 2, 2) * Math.PI),
         printDirRad = PRINT_DIR * Math.PI / 180,
         FIT_WIDTH = Math.abs(PRINT_SIZE_X * Math.cos(printDirRad)) + Math.abs(PRINT_SIZE_Y * Math.sin(printDirRad)),
@@ -166,8 +170,9 @@ export function generateTestPattern(calibrationParams: TestPatternConfiguration)
     };
 
     // Start G-code for pattern
-    var k_script =  `\n; ### Prusa Slicer K-Factor Calibration Pattern ###\n` +
-                    `; -------------------------------------------------\n` +
+    var k_script =  `; ----------------------------------------------------\n` +
+                    `; ###  Prusa Slicer Pressure Advance Test Pattern  ###\n` +
+                    `; ----------------------------------------------------\n` +
                     `;\n` +
                     `; Printer: ${PRINTER}\n` +
                     `; Filament: ${FILAMENT}\n` +
@@ -218,7 +223,7 @@ export function generateTestPattern(calibrationParams: TestPatternConfiguration)
         frameLength = PRINT_SIZE_Y - 19;
 
     k_script += ';\n' +
-                '; print anchor frame\n' +
+                '; Print anchor frame\n' +
                 ';\n' +
                 moveTo(frameStartX1, frameStartY, basicSettings) +
                 createLine(frameStartX1, frameStartY + frameLength, frameLength, basicSettings, {'extMult': EXT_MULT * 1.1}) +
@@ -234,7 +239,7 @@ export function generateTestPattern(calibrationParams: TestPatternConfiguration)
 
     // generate the k-factor Test pattern
     k_script += ';\n' +
-                '; start the Test pattern\n' +
+                '; Start the Test pattern\n' +
                 ';\n' +
                 moveTo(PAT_START_X, PAT_START_Y, basicSettings);
 
@@ -242,7 +247,7 @@ export function generateTestPattern(calibrationParams: TestPatternConfiguration)
 
     // Set pressure advance to the minimum test value for the rest of the print
     k_script += ';\n' +
-                'M117 Pressure Advance = \n' +
+                `M117 Pressure Advance = ${ADVANCE_LINES[0]}\n` +
                 `${ADVANCE_GCODE_PREFIX}${ADVANCE_LINES[0]}; Set Pressure Advance to minimum test value\n`;
 
     // mark area of speed changes
@@ -285,16 +290,18 @@ export function generateTestPattern(calibrationParams: TestPatternConfiguration)
         }
     }
 
+    k_script += setProgress(100);
+
   return k_script;
 }
 
 // TODO: emit M73 to drive completion UI in printers
 // https://help.prusa3d.com/article/prusa-firmware-specific-g-codes_112173 - supports P and R
 // https://marlinfw.org/docs/gcode/M073.html - supports P and R
-// https://docs.duet3d.com/User_manual/Reference/Gcodes#m73-set-remaining-print-time only supports R = remainig print time
+// https://docs.duet3d.com/User_manual/Reference/Gcodes#m73-set-remaining-print-time only supports R = remaining print time
 // https://www.klipper3d.org/G-Codes.html - only supports P = percent
 function setProgress(percent: number) {
-    return `M73 P${percent} R${5.0 / percent} ; Print progress\n`;
+    return `M73 P${percent} R${5.0 / percent} ; Print progress ${percent}%\n`;
 }
 
 // Decimal round
