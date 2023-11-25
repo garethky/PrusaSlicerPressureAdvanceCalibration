@@ -60,9 +60,10 @@ function klipperStartGocde(startLines: Array<string>, endLines: Array<string>, s
         xCenter = (x + (printArea.width / 2)).toFixed(3),
         yCenter = (y + (printArea.height / 2)).toFixed(3),
         temp = '' + patternConfig.filament_temperature.value,
-        bedTemp = '' + settings.first_layer_temperature.toValue(),
+        bedTemp = '' + settings.bed_temperature.toValue(),
         replacements: Map<string, string[]> = new Map([
             // bare minimum set of variables that klipper users are likely to need
+            // TODO: arrays with all same values should be sized according to the number of tool reported in the machine
             ['temperature', [temp, temp, temp, temp, temp]],
             ['bed_temperature', [bedTemp, bedTemp, bedTemp, bedTemp, bedTemp]],
             ['first_layer_temperature', [temp, temp, temp, temp, temp]],
