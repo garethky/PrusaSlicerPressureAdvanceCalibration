@@ -181,7 +181,7 @@ export function generateTestPattern(calibrationParams: TestPatternConfiguration)
                     `; Settings Printer:\n` +
                     `; Filament Diameter = ${FILAMENT_DIAMETER} mm\n` +
                     `; Nozzle Diameter = ${NOZZLE_DIAMETER} mm\n` +
-                    `; Filament Temperature = S${FILAMENT_TEMPERATURE} C` +
+                    `; Filament Temperature = ${FILAMENT_TEMPERATURE} C\n` +
                     `; Retraction Distance = ${RETRACT_DIST} mm\n` +
                     `; Layer Height = ${HEIGHT_LAYER} mm\n` +
                     //`; Extruder = ${TOOL_INDEX} \n` +

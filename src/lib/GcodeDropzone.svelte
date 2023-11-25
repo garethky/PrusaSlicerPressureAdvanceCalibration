@@ -1,4 +1,5 @@
 <script lang="ts">
+  import type { ChangeEventHandler } from "svelte/elements";
     import Admonition from "./Admonition.svelte";
     import {gcodeStore, SettingValue, GcodeProcessor, RequiredSlicerSettings } from "./GcodeProcessor";
 
@@ -38,7 +39,19 @@
         }
         else if (files.length === 1) {
             gcodeStore.parseFile(files[0]);
-            
+        } else {
+            uploadError = "Multiple files found, please only drop 1 file.";
+        }
+    }
+
+    function onFileInput(event: any) {
+        console.log(event.target.files);
+        const files: File[] = event.target.files;
+        if (files.length === 0) {
+            uploadError = "No Files Found";
+        }
+        else if (files.length === 1) {
+            gcodeStore.parseFile(files[0]);
         } else {
             uploadError = "Multiple files found, please only drop 1 file.";
         }
@@ -56,7 +69,7 @@
     <form>
         <fieldset>
             <div class="dropzone" on:dragover={(e) => {e.preventDefault();}} on:drop={onDrop} role="form">
-                <input class="dropzone" type="file" name="browse"/>
+                <input class="dropzone" type="file" name="browse" on:change={onFileInput}/>
                 <div class="dropzone-prompt">
                     <strong>Click to Upload</strong> a <code>.gcode</code> file or drag and drop here.
                     <Admonition type="success" message="{uploadSuccess}"/>
