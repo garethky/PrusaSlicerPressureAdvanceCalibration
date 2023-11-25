@@ -40,8 +40,8 @@ function klipperGcode(toolIndex: number): PressureAdvanceGCode {
     }
     return {
         displayValue: `klipper: PRESSURE_ADVANCE`,
-        gcodePrefix: `PRESSURE_ADVANCE EXTRUDER=${extruder} ADVANCE=`,
-        slicerTemplate: `PRESSURE_ADVANCE EXTRUDER=extruder{if filament_extruder_id > 0}filament_extruder_id{endif} ADVANCE=`
+        gcodePrefix: `SET_PRESSURE_ADVANCE EXTRUDER=${extruder} ADVANCE=`,
+        slicerTemplate: `SET_PRESSURE_ADVANCE EXTRUDER=extruder{if filament_extruder_id > 0}filament_extruder_id{endif} ADVANCE=`
     };
 }
 
