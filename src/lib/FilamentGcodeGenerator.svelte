@@ -7,13 +7,37 @@
     let isFormDisabled = true;
     let nozzleDiameter: number | null = null;
     let pressureAdvanceGCode: string | null = null;
+    let code: string = "";
+
+    function templateCode() {
+        code = `{if nozzle_diameter[filament_extruder_id]==${nozzleDiameter}}\n` +
+        `    ${pressureAdvanceGCode}${paField.numericValue} ; Set Pressure Advance to ${paField.numericValue}\n` +
+        `{endif}`;
+    }
+
+    function copyToClipboard() {
+        navigator.clipboard.writeText(code);
+    }
+
+    $: {
+        if (paField.isValid) {
+            templateCode();
+        }
+    }
 
     $: {
         if ($testPatternConfigStore) {
             pressureAdvanceGCode = $testPatternConfigStore.advance_gcode_prefix.value.slicerTemplate;
             nozzleDiameter = $testPatternConfigStore?.nozzle_diameter.value;
+            
         }
         isFormDisabled = pressureAdvanceGCode === null || nozzleDiameter === null;
+        if (isFormDisabled) {
+            code = "Upload a Gcode file build the template...";
+        } else {
+            templateCode();
+        }
+        
     }
 </script>
 
@@ -30,17 +54,11 @@
         <div class="grid">
             <div>
                 <pre><code>
-{#if isFormDisabled}
-Upload a Gcode file to see code...
-{:else}
-&#123;if nozzle_diameter[filament_extruder_id]=={nozzleDiameter}&#125;
-{pressureAdvanceGCode}{paField.numericValue} ; Set Pressure Advance to {paField.numericValue}
-&#123;endif&#125;
-{/if}
+{code}
                 </code></pre>
             </div>
             <div>
-                <button id="copy-button" disabled={!paField.isValid}>Copy to 📋</button>
+                <button type="button" id="copy-button" on:click={copyToClipboard} disabled={!paField.isValid}>Copy to 📋</button>
             </div>
         </div>
     </fieldset>
