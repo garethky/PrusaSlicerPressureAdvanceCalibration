@@ -371,30 +371,35 @@ export class GcodeProcessor {
     constructor(file: File, onComplete: () => void) {
         this.fileName = file.name;
         this.fileExtension = this.#extractExtension();
-        if (this.fileExtension === '.bgcode') {
-            this.errors.push('Binary Gcode files are not supported. Please disable binary gcode in the slicer and export plain text gcode.');
-        }
         const reader = new FileReader();
         let self = this;
-        reader.onload = function(event) {
-            if (event && event.target && event.target.result) {
-                let blob = event.target.result;
-                let gcodeString = '';
-                if (blob instanceof ArrayBuffer) {
-                    gcodeString = new TextDecoder().decode(blob);
-                } else {
-                    gcodeString = blob;
-                }
+
+        if (this.fileExtension === '.bgcode') {
+            file.arrayBuffer().then((data) => { 
+                const gcodeString = Module.bgcode2ascii_and_verify(data);
                 self.#processContents(gcodeString);
                 onComplete();
-            }
-        };
-        reader.readAsText(file);
+            });
+        } else {
+        reader.onload = function(event) {
+                if (event && event.target && event.target.result) {
+                    let blob = event.target.result;
+                    let gcodeString = '';
+                    if (blob instanceof ArrayBuffer) {
+                        gcodeString = new TextDecoder().decode(blob);
+                    } else {
+                        gcodeString = blob;
+                    }
+                    self.#processContents(gcodeString);
+                    onComplete();
+                }
+            };
+            reader.readAsText(file);
+        }
     }
 
     #extractExtension(): string {
         let dotIndex = this.fileName.lastIndexOf('.');
-        // TODO: if file name ends with '.bgcode' complain about binary gcode
         return this.fileName.substring(dotIndex);
     }
 
@@ -454,8 +459,7 @@ export class GcodeProcessor {
 }
 
 import { writable } from "svelte/store";
-  import type { TestPatternConfiguration } from "./TestPatternConfiguration";
-
+import type { TestPatternConfiguration } from "./TestPatternConfiguration";
 
 function createGCodeProcessorStore() {
     const { subscribe, set, update } = writable<GcodeProcessor | null>(null);

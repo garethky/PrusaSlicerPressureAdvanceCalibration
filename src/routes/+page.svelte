@@ -25,7 +25,6 @@
                   <li>If using a multi-tool printer (XL) select the tool that has the filament in it</li>
               </ul>
           </li>
-          <li>Export the GCode. <br/><em>You must turn off binary GCode Generation. Print Settings → Output Options → Export as Binary Gcode. Make sure this option is unchecked.</em></li>
       </ol>
   </article>
   <article>
