@@ -45,7 +45,7 @@ export function replaceVariables(blocks: Array<Block | ScriptBlock>, replacement
                     block.variable = replacement[0];
                 }
             } else {
-                throw `Variable ${block.variable} not found!`;
+                throw `GCode Template failed: variable ${block.variable} not supported!`;
             }
         }
     })

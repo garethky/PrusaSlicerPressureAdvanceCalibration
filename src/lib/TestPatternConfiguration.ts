@@ -128,8 +128,8 @@ function sumExplainedValue(name: string, units: string, values: Array<SettingVal
     return new ExplainedValue(name, sum, `${sum} ${units}`, new ExplanationSumOf(values));
 }
 
-function maxExplainedValue(name: string, values: Array<SettingValue<number>>): ExplainedValue<number> {
-    let maxValue = Number.MIN_VALUE;
+function maxExplainedValue(name: string, values: Array<SettingValue<number>>, default_value?: SettingValue<number>): ExplainedValue<number> {
+    let maxValue = 0;
     let maxValueSetting: SettingValue<number> | null = null;
     for (const value of values) {
         if (value.value !== null) {
@@ -142,7 +142,10 @@ function maxExplainedValue(name: string, values: Array<SettingValue<number>>): E
     if (maxValueSetting !== null) {
         return new ExplainedValue(name, maxValueSetting.toValue(), maxValueSetting.displayValue, new ExplanationMaxOf(values, maxValueSetting));
     }
-    throw "No max Value found, all values are null!";
+    if (default_value && default_value.toValue() > 0){
+        return simpleExplainedValue(name, default_value);
+    }
+    throw "No max value found, all values are null or 0!";
 }
 
 function explainMaxSpeed(slicerSettings: RequiredSlicerSettings) {
@@ -234,8 +237,8 @@ export class TestPatternConfiguration {
 
         // speeds
         this.travelAcceleration = simpleExplainedValue('Travel Acceleration', slicerSettings.travel_acceleration.toValue() > 0 ? slicerSettings.travel_acceleration : slicerSettings.default_acceleration);
-        this.testAcceleration = maxExplainedValue('Test Acceleration', [slicerSettings.perimeter_acceleration, slicerSettings.infill_acceleration, slicerSettings.solid_infill_acceleration, slicerSettings.top_solid_infill_acceleration, slicerSettings.external_perimeter_acceleration]);
-        this.printAcceleration = simpleExplainedValue('Print Acceleration', slicerSettings.first_layer_acceleration);
+        this.testAcceleration = maxExplainedValue('Test Acceleration', [slicerSettings.perimeter_acceleration, slicerSettings.infill_acceleration, slicerSettings.solid_infill_acceleration, slicerSettings.top_solid_infill_acceleration, slicerSettings.external_perimeter_acceleration], slicerSettings.default_acceleration);
+        this.printAcceleration = simpleExplainedValue('Print Acceleration', slicerSettings.first_layer_acceleration.toValue() > 0 ? slicerSettings.first_layer_acceleration : slicerSettings.default_acceleration);
         
         this.speed_print = simpleExplainedValue('Printing Speed', slicerSettings.first_layer_speed);
         this.speed_slow = simpleExplainedValue('Test Slow Extrusion Speed', slicerSettings.first_layer_speed);
