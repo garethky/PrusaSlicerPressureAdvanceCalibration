@@ -62,10 +62,13 @@
   
   <footer>
       <section>
-          <h3>Credits</h3>
-          This is based on the original <a href="https://marlinfw.org/tools/lin_advance/k-factor.html">Marlin K-factor Calibration Pattern</a> by Sinos. Many thanks and sorry for taking a hacksaw to your work.
           <h3>License</h3>
-          GPLV3
+          <ul>
+              <li><a href="https://github.com/garethky/PrusaSlicerPressureAdvanceCalibration">Get the source on GitHub</a></li>
+              <li><a href="https://github.com/garethky/PrusaSlicerPressureAdvanceCalibration/tree/mainline?tab=GPL-3.0-1-ov-file#readme">GPL-3.0 License</a></li>
+          </ul>
+          <h3>Credits</h3>
+          <p>This is based on the original <a href="https://marlinfw.org/tools/lin_advance/k-factor.html">Marlin K-factor Calibration Pattern</a> by Sineos. Many thanks and sorry for taking a hacksaw to your work.</p>          
       </section>
   </footer>
   
