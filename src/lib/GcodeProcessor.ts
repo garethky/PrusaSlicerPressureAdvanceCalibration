@@ -20,7 +20,7 @@ export class SettingValue<T> {
 
 type ParserFunction<T> = (value: SettingValue<T>, toolNumber: number | null) => void;
 type DescriberFunction<T> = (value: SettingValue<T>) => void;
-class SettingsDescriptor<T> {
+export class SettingsDescriptor<T> {
     key: string;
     parser: ParserFunction<T>;
     describer: DescriberFunction<T>;
@@ -39,13 +39,13 @@ type BedShape = {
     y: number,
 }
 
-function validateNumberRaw(value: number, errors: Array<string>): void {
+export function validateNumberRaw(value: number, errors: Array<string>): void {
     if ((isNaN(value) || !isFinite(value))) {
         errors.push(`Value '${value}' is not a number`);
     }
 }
 
-function _parseInt(raw: string, errors: Array<string>): number {
+export function _parseInt(raw: string, errors: Array<string>): number {
     let val: number = parseInt(raw, 10);
     validateNumberRaw(val, errors);
     return val;
@@ -77,17 +77,23 @@ function parseToolString(value: SettingValue<string>, toolNumber: number | null)
     value.value = quoteStr.substring(1, quoteStr.length - 1);
 }
 
-function parseSingleInt(value: SettingValue<number>, toolNumber: number | null): void {
+export function parseSingleInt(value: SettingValue<number>, toolNumber: number | null): void {
+    if (value.raw === 'nil') {
+        return;
+    }
     value.value = parseInt(value.raw, 10);
     validateNumber(value);
 }
 
-function parseSingleFloat(value: SettingValue<number>, toolNumber: number | null): void {
+export function parseSingleFloat(value: SettingValue<number>, toolNumber: number | null): void {
+    if (value.raw === 'nil') {
+        return;
+    }
     value.value = parseFloat(value.raw);
     validateNumber(value);
 }
 
-function parseToolFloat(value: SettingValue<number>, toolNumber: number | null): void {
+export function parseToolFloat(value: SettingValue<number>, toolNumber: number | null): void {
     if (toolNumber == null) {
         value.errors.push(`Can't unpack '${value.key}' (${value.raw}) because the setting for 'primary_extruder' is missing`);
         return;
@@ -97,6 +103,9 @@ function parseToolFloat(value: SettingValue<number>, toolNumber: number | null):
         throw `Setting ${value.key}'s value '${value.raw}' does not have enough entries for tool #${toolNumber}`;
     }
     let splitValue: string = toolValues[toolNumber - 1]
+    if (splitValue === 'nil') {
+        return;
+    }
     value.value = parseFloat(splitValue);
     validateNumber(value);
 }
@@ -122,39 +131,39 @@ function parseBedShape(value: SettingValue<BedShape>): void {
     }
 }
 
-function describeString(value: SettingValue<string>): void {
+export function describeString(value: SettingValue<string>): void {
     value.displayValue = value.value;
 }
 
-function describeNumber(value: SettingValue<number>): void {
+export function describeNumber(value: SettingValue<number>): void {
     value.displayValue = '' + value.value;
 }
 
-function describePercent(value: SettingValue<number>): void {
+export function describePercent(value: SettingValue<number>): void {
     value.displayValue = '' + value.value + ' %';
 }
 
-function describeMms(value: SettingValue<number>): void {
+export function describeMms(value: SettingValue<number>): void {
     value.displayValue = '' + value.value + ' mm/s';
 }
 
-function describeMm(value: SettingValue<number>): void {
+export function describeMm(value: SettingValue<number>): void {
     value.displayValue = '' + value.value + ' mm';
 }
 
-function describeMmCubed(value: SettingValue<number>): void {
+export function describeMmCubed(value: SettingValue<number>): void {
     value.displayValue = '' + value.value + ' mm&sup3;';
 }
 
-function describeMmsSquared(value: SettingValue<number>): void {
+export function describeMmsSquared(value: SettingValue<number>): void {
     value.displayValue = '' + value.value + ' mm/s&sup2;';
 }
 
-function describeTemp(value: SettingValue<number>): void {
+export function describeTemp(value: SettingValue<number>): void {
     value.displayValue = '' + value.value + ' &deg;C';
 }
 
-function describeBedShape(value: SettingValue<BedShape>): void {
+export function describeBedShape(value: SettingValue<BedShape>): void {
     value.displayValue = [value.value?.shape, ": ", '' + value.value?.x + "mm x " , '' + value.value?.y, 'mm'].join('');
 }
 
@@ -216,6 +225,30 @@ class RequiredSettingsDescriptors {
     filament_max_volumetric_speed: SettingsDescriptor<number> = new SettingsDescriptor('filament_max_volumetric_speed', parseSingleFloat, describeMmCubed, false);
 }
 
+export function valueFromSetting<T>(foundSettings: Map<string, string>,
+                                    descriptor: SettingsDescriptor<T>,
+                                    perimeter_extruder: SettingValue<number>,
+                                    allErrors: Array<Array<string>> = [],
+                                    allSettings: Array<SettingValue<any>> = []): SettingValue<T> {
+    const toolNumber: number | null = perimeter_extruder?.value;
+    let val: SettingValue<T> = new SettingValue<T>(descriptor.key, '');
+    val.displayValue = '';
+
+    if (foundSettings.has(descriptor.key)) {
+        val = new SettingValue<T>(descriptor.key, '' + foundSettings.get(descriptor.key));
+        descriptor.parser(val, toolNumber);
+        if (val.value !== null) {
+            descriptor.describer(val);
+        }
+    }
+    if (val.value === null && descriptor.isRequired) {
+        val.errors.push('Required setting not found');
+    }
+    allErrors.push(val.errors);
+    allSettings.push(val); // makes it easy for the front end to iterate over all settings
+    return val;
+}
+
 export class RequiredSlicerSettings {
     hasAllSettings = true;
     hasErrors = false;
@@ -271,27 +304,10 @@ export class RequiredSlicerSettings {
     start_gcode: SettingValue<string>;
 
     #toValue<T>(foundSettings: Map<string, string>, descriptor: SettingsDescriptor<T>): SettingValue<T> {
-        const toolNumber: number | null = this?.perimeter_extruder?.value;
-        let val: SettingValue<T>;
-        if (foundSettings.has(descriptor.key)) {
-            val = new SettingValue<T>(descriptor.key, '' + foundSettings.get(descriptor.key));
-            val.raw = '' + foundSettings.get(descriptor.key);
-            // TODO: this is kind of hacky, maybe pull this out first and if it cant be found don't call this function
-            descriptor.parser(val, toolNumber);
-            descriptor.describer(val);
-        } else {
-            if (descriptor.isRequired) {
-                this.hasAllSettings = false;
-                val = new SettingValue<T>(descriptor.key, '');
-                val.displayValue = '';
-                val.errors.push('Required setting not found');
-            } else {
-                val = new SettingValue<T>(descriptor.key, '');
-                val.displayValue = '';
-            }
+        let val: SettingValue<T> = valueFromSetting(foundSettings, descriptor, this?.perimeter_extruder, this.#allErrors, this.allSettings);
+        if (this.#allErrors[this.#allErrors.length - 1].length > 0) {
+            this.hasAllSettings = false;
         }
-        this.#allErrors.push(val.errors);
-        this.allSettings.push(val); // makes it easy for the front end to iterate over all settings
         return val;
     }
 
