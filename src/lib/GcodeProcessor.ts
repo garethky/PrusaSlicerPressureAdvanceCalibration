@@ -450,11 +450,13 @@ export class GcodeProcessor {
     #findStartGcode(): Array<string> {
         for (var i = 0; i < this.allLines.length; i++) {
             const line = this.allLines[i];
-            if (line === ";AFTER_LAYER_CHANGE") {
+            if (line === ";AFTER_LAYER_CHANGE"
+                || line === ";LAYER_CHANGE"
+                || line === ";START_GCODE_END") {
                 return this.allLines.slice(0, i);
             }
         }
-        this.errors.push("Could not find the last line of the start gcode block. Missing <code>;AFTER_LAYER_CHANGE</code> comment. Check in the printers custom gcode settings.");
+        this.errors.push("Could not find the last line of the 'Start G-code' block. Missing <code>;AFTER_LAYER_CHANGE</code>, <code>;LAYER_CHANGE</code> or <code>;START_GCODE_END</code> comment. Check in the printers custom gcode settings.");
         return [];
     }
     

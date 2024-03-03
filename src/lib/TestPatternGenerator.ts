@@ -172,50 +172,49 @@ export function generateTestPattern(calibrationParams: TestPatternConfiguration)
     };
 
     // Start G-code for pattern
-    var k_script =  `; ----------------------------------------------------\n` +
-                    `; ###  Prusa Slicer Pressure Advance Test Pattern  ###\n` +
-                    `; ----------------------------------------------------\n` +
-                    `;\n` +
-                    `; Printer: ${PRINTER}\n` +
-                    `; Filament: ${FILAMENT}\n` +
-                    `; Created: ${new Date()}\n` +
-                    `;\n` +
-                    `; Settings Printer:\n` +
-                    `; Filament Diameter = ${FILAMENT_DIAMETER} mm\n` +
-                    `; Nozzle Diameter = ${NOZZLE_DIAMETER} mm\n` +
-                    `; Filament Temperature = ${FILAMENT_TEMPERATURE} C\n` +
-                    `; Retraction Distance = ${RETRACT_DIST} mm\n` +
-                    `; Layer Height = ${HEIGHT_LAYER} mm\n` +
-                    //`; Extruder = ${TOOL_INDEX} \n` +
-                    `; Fan Speed = ${FAN_SPEED} %\n` +
-                    `;\n` +
-                    `; Settings Print Bed:\n` +
-                    `; Bed Shape = ${BED_SHAPE}\n` +
-                    (BED_SHAPE === 'Round' ? `; Bed Diameter = ${BED_X} mm\n` : `; Bed Size X = ${BED_X} mm\n`) +
-                    (BED_SHAPE === 'Round' ? `` : `; Bed Size Y = ${BED_Y} mm\n`) +
-                    `; Origin Bed Center = ${(NULL_CENTER ? 'true' : 'false')}\n` +
-                    `;\n` +
-                    `; Settings Speed:\n` +
-                    `; Slow Printing Speed = ${SPEED_SLOW} mm/min\n` +
-                    `; Fast Printing Speed = ${SPEED_FAST} mm/min\n` +
-                    `; Travel Speed = ${TRAVEL_SPEED} mm/min\n` +
-                    `; Retract Speed = ${RETRACT_SPEED} mm/min\n` +
-                    `; Unretract Speed = ${UNRETRACT_SPEED} mm/min\n` +
-                    `; Printing Acceleration = ${PRINT_ACCELERATION} mm/s^2\n` +
-                    `; Test Acceleration = ${TEST_ACCELERATION} mm/s^2\n` +
-                    `; Travel Acceleration = ${TRAVEL_ACCELERATION} mm/s^2\n` +
-                    `;\n` +
-                    `; Settings Pattern:\n` +
-                    `; Test Line Spacing = ${LINE_SPACING} mm\n` +
-                    `; Test Line Length Slow = ${LENGTH_SLOW} mm\n` +
-                    `; Test Line Length Fast = ${LENGTH_FAST} mm\n` +
-                    `; Print Size X = ${FIT_WIDTH} mm\n` +
-                    `; Print Size Y = ${FIT_HEIGHT} mm\n` +
-                    //`; Print Rotation = ${PRINT_DIR} degree\n` +
-                    `;\n` +
-                    `; -------------------------------------------------\n\n` +
-                    `G92 E0 ; Reset extruder distance\n` +
-                    `M106 S${Math.round(FAN_SPEED * 2.55)} ; Start print fan\n`;
+    var k_script = `; ----------------------------------------------------\n` +
+                   `; ###  Prusa Slicer Pressure Advance Test Pattern  ###\n` +
+                   `; ----------------------------------------------------\n` +
+                   `;\n` +
+                   `; Printer: ${PRINTER}\n` +
+                   `; Filament: ${FILAMENT}\n` +
+                   `; Created: ${new Date()}\n` +
+                   `;\n` +
+                   `; Settings Printer:\n` +
+                   `; Filament Diameter = ${FILAMENT_DIAMETER} mm\n` +
+                   `; Nozzle Diameter = ${NOZZLE_DIAMETER} mm\n` +
+                   `; Filament Temperature = ${FILAMENT_TEMPERATURE} C\n` +
+                   `; Retraction Distance = ${RETRACT_DIST} mm\n` +
+                   `; Layer Height = ${HEIGHT_LAYER} mm\n` +
+                   `; Fan Speed = ${FAN_SPEED} %\n` +
+                   `;\n` +
+                   `; Settings Print Bed:\n` +
+                   `; Bed Shape = ${BED_SHAPE}\n` +
+                   (BED_SHAPE === 'Round' ? `; Bed Diameter = ${BED_X} mm\n` : `; Bed Size X = ${BED_X} mm\n`) +
+                   (BED_SHAPE === 'Round' ? `` : `; Bed Size Y = ${BED_Y} mm\n`) +
+                   `; Origin Bed Center = ${(NULL_CENTER ? 'true' : 'false')}\n` +
+                   `;\n` +
+                   `; Settings Speed:\n` +
+                   `; Slow Printing Speed = ${SPEED_SLOW} mm/min\n` +
+                   `; Fast Printing Speed = ${SPEED_FAST} mm/min\n` +
+                   `; Travel Speed = ${TRAVEL_SPEED} mm/min\n` +
+                   `; Retract Speed = ${RETRACT_SPEED} mm/min\n` +
+                   `; Unretract Speed = ${UNRETRACT_SPEED} mm/min\n` +
+                   `; Printing Acceleration = ${PRINT_ACCELERATION} mm/s^2\n` +
+                   `; Test Acceleration = ${TEST_ACCELERATION} mm/s^2\n` +
+                   `; Travel Acceleration = ${TRAVEL_ACCELERATION} mm/s^2\n` +
+                   `;\n` +
+                   `; Settings Pattern:\n` +
+                   `; Test Line Spacing = ${LINE_SPACING} mm\n` +
+                   `; Test Line Length Slow = ${LENGTH_SLOW} mm\n` +
+                   `; Test Line Length Fast = ${LENGTH_FAST} mm\n` +
+                   `; Print Size X = ${FIT_WIDTH} mm\n` +
+                   `; Print Size Y = ${FIT_HEIGHT} mm\n` +
+                   `;\n` +
+                   `; -------------------------------------------------\n\n`;
+    // reset before layer
+    k_script += `G92 E0.0 ; Reset extruder distance\n`;
+    k_script += `M106 S${Math.round(FAN_SPEED * 2.55)} ; Start print fan\n`;
 
     //move to layer Height
     k_script += 'G1 Z' + (HEIGHT_LAYER) + ' F' + SPEED_SLOW + ' ; Move to layer height\n';

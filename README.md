@@ -42,11 +42,9 @@ If you think the majority of people need to configure something every time they 
 
 ## How does it tell where the test object is in the GCode?
 
-The comment `;AFTER_LAYER_CHANGE` in the printers gcode is used as the start of the object. By default this is a comment that notes the layer z. If you have custom code here, put the comment at the end of the block.
+The comment `;LAYER_CHANGE` in the gcode is used as the start of the object. This comment is emitted by Prusa Slicer. Alternately you can include the comment `;START_GCODE_END` at the every end of the 'Start G-code' block and that will be used instead.
 
-The comment `; Filament-specific end gcode` marks the spot where the object has finished. This is found in the Filament specific gcode.
-
-Both of these comments are defaults in Prusa slicer and should be there, unless you removed them.
+The comment `; Filament-specific end gcode` marks the spot where the object has finished. This is found in the Filament specific gcode. This is the default in Prusa slicer and should be there, unless you removed it.
 
 ## Do I need a specific test model to slice?
 
