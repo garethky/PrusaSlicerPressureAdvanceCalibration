@@ -162,6 +162,8 @@ describe('evaluateGcodeTemplate tests', () => {
             ['first_layer_print_min', ['0', '1']],
             ['first_layer_print_max', ['300', '301']],
         ]);
-        expect(evaluateGcodeTemplate(startGcode, replacements)).toBe(expected)
+        let templated = evaluateGcodeTemplate(startGcode, replacements);
+        expect(templated.length).toBe(1);
+        expect(templated[0]).toBe(expected);
     });
 });

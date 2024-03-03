@@ -233,7 +233,7 @@ export class TestPatternConfiguration {
         this.extrusion_multiplier = simpleExplainedValue('Extrusion Multiplier', slicerSettings.extrusion_multiplier);
         
         // z hop
-        this.zHopHeight = simpleExplainedValue('Z-Hop Height', slicerSettings.retract_lift);
+        this.zHopHeight = filamentOverrideExplainedValue('Z-Hop Height', slicerSettings.retract_lift, slicerSettings.filament_retract_lift);
 
         // speeds
         this.travelAcceleration = simpleExplainedValue('Travel Acceleration', slicerSettings.travel_acceleration.toValue() > 0 ? slicerSettings.travel_acceleration : slicerSettings.default_acceleration);

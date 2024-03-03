@@ -28,6 +28,7 @@ type BasicSettings = {
     printAcceleration: number,
     travelAcceleration: number,
     testAcceleration: number,
+    layerHeight: number,
     zHopHeight: number,
     centerX: number,
     centerY: number,
@@ -148,7 +149,8 @@ export function generateTestPattern(calibrationParams: TestPatternConfiguration)
         travelAcceleration: TRAVEL_ACCELERATION,
         printAcceleration: PRINT_ACCELERATION,
         testAcceleration: TEST_ACCELERATION,
-        zHopHeight: Z_HOP_HEIGHT,
+        layerHeight: HEIGHT_LAYER,
+        zHopHeight: HEIGHT_LAYER + Z_HOP_HEIGHT,
         centerX: CENTER_X,
         centerY: CENTER_Y,
         printDir: PRINT_DIR,
@@ -227,23 +229,29 @@ export function generateTestPattern(calibrationParams: TestPatternConfiguration)
     k_script += ';\n' +
                 '; Print anchor frame\n' +
                 ';\n' +
+                zHop('+', basicSettings) +
                 moveTo(frameStartX1, frameStartY, basicSettings) +
+                zHop('-', basicSettings) +
                 createLine(frameStartX1, frameStartY + frameLength, frameLength, basicSettings, {'extMult': EXT_MULT * 1.1}) +
                 moveTo(frameStartX1 + LINE_WIDTH, frameStartY + frameLength, basicSettings) +
                 createLine(frameStartX1 + LINE_WIDTH, frameStartY, -frameLength, basicSettings, {'extMult': EXT_MULT * 1.1}) +
                 doEfeed('-', basicSettings) +
+                zHop('+', basicSettings) +
                 moveTo(frameStartX2, frameStartY, basicSettings) +
+                zHop('-', basicSettings) +
                 doEfeed('+', basicSettings) +
                 createLine(frameStartX2, frameStartY + frameLength, frameLength, basicSettings, {'extMult': EXT_MULT * 1.1}) +
                 moveTo(frameStartX2 - LINE_WIDTH, frameStartY + frameLength, basicSettings) +
                 createLine(frameStartX2 - LINE_WIDTH, frameStartY, -frameLength, basicSettings, {'extMult': EXT_MULT * 1.1}) +
-                doEfeed('-', basicSettings);
+                doEfeed('-', basicSettings) +
+                zHop('+', basicSettings);
 
     // generate the k-factor Test pattern
     k_script += ';\n' +
                 '; Start the Test pattern\n' +
                 ';\n' +
-                moveTo(PAT_START_X, PAT_START_Y, basicSettings);
+                moveTo(PAT_START_X, PAT_START_Y, basicSettings) +
+                zHop('-', basicSettings);
 
     k_script += createStdPattern(PAT_START_X, PAT_START_Y, basicSettings, patSettings);
 
@@ -259,15 +267,19 @@ export function generateTestPattern(calibrationParams: TestPatternConfiguration)
 
     k_script += ';\n' +
                 '; Mark the test area for reference\n' +
+                zHop('+', basicSettings) +
                 moveTo(refStartX1, refStartY, basicSettings) +
+                zHop('-', basicSettings) +
                 doEfeed('+', basicSettings) +
                 createLine(refStartX1, refStartY + 20, 20, basicSettings) +
                 doEfeed('-', basicSettings) +
+                zHop('+', basicSettings) +
                 moveTo(refStartX2, refStartY, basicSettings) +
+                zHop('-', basicSettings) +
                 doEfeed('+', basicSettings) +
                 createLine(refStartX2, refStartY + 20, 20, basicSettings) +
                 doEfeed('-', basicSettings) +
-                zHop(basicSettings);
+                zHop('+', basicSettings);
 
     // print K values beside the test lines
     var numStartX = CENTER_X + (0.5 * LENGTH_FAST) + LENGTH_SLOW  - 2,
@@ -283,11 +295,11 @@ export function generateTestPattern(calibrationParams: TestPatternConfiguration)
         // only print glyphs on every other line
         if (stepping % 2 === 0) {
             k_script += moveTo(numStartX, numStartY + (stepping * LINE_SPACING), basicSettings) +
-                        zHop(basicSettings) +
+                        zHop('-', basicSettings) +
                         doEfeed('+', basicSettings) +
                         createGlyphs(numStartX, numStartY + (stepping * LINE_SPACING), basicSettings, roundDecimal(paValue, 3)) +
                         doEfeed('-', basicSettings) +
-                        zHop(basicSettings);
+                        zHop('+', basicSettings);
         }
     }
 
@@ -333,7 +345,7 @@ function moveTo(coordX: number, coordY: number, basicSettings: BasicSettings) {
     return setAcceleration('travel', basicSettings) +
         'G1 X' + roundDecimal(rotateX(coordX, basicSettings.centerX, coordY, basicSettings.centerY, basicSettings.printDir), 4) +
         ' Y' + roundDecimal(rotateY(coordX, basicSettings.centerX, coordY, basicSettings.centerY, basicSettings.printDir), 4) +
-        ' F' + basicSettings.travelSpeed + ' ; move to start\n' +
+        ' F' + basicSettings.travelSpeed + ' ; travel move\n' +
         setAcceleration('print', basicSettings);
 }
 
@@ -370,8 +382,14 @@ function doEfeed(dir: string, basicSettings: BasicSettings) {
 }
 
 // gcode for small z hop
-function zHop(basicSettings: BasicSettings) {
-    return 'G1 Z' + roundDecimal(basicSettings.zHopHeight, 3) + ' F' + basicSettings.travelSpeedZ + ' ; zHop\n';
+function zHop(dir: string, basicSettings: BasicSettings) {
+    if (dir === '+') {
+        return 'G1 Z' + roundDecimal(basicSettings.zHopHeight, 3) + ' F' + basicSettings.travelSpeedZ + ' ; zHop Up\n';
+    }
+    else {
+        return 'G1 Z' + roundDecimal(basicSettings.layerHeight, 3) + ' F' + basicSettings.travelSpeedZ + ' ; zHop Down\n';
+    }
+    
 }
 
 // create standard test pattern
