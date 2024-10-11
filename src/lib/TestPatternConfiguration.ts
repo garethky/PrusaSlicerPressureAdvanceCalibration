@@ -24,7 +24,7 @@ export class PrintArea {
     }
 }
 
-type PressureAdvanceGCode = {
+export type PressureAdvanceGCode = {
     // this is the stirng that contains just the co with no arguments for display
     displayValue: string
     // this value is used in rendering gcode for the test
@@ -81,24 +81,40 @@ function maxVolumetricSpeed(requestedSpeed: number, extrusionWidth: number, laye
 function selectAdvanceGCodePrefix(slicerSettings: RequiredSlicerSettings, toolIndex: number) {
     let flavour = slicerSettings.gcode_flavor.toValue();
     let printerModel = slicerSettings.printer_model.toValue();
-    let gcode;
-    if ('klipper'.localeCompare(flavour) === 0) {
-        gcode = klipperGcode(toolIndex);
-    } else if ('reprapfirmware'.localeCompare(flavour) === 0) {
-        gcode = reprapfirmwareGcode(toolIndex);
-    } else if (!!flavour.match('marlin|marlin2')) {
-        // Modern Prusa Pressure Advance
-        if (!!printerModel.match(/XL\d?IS|MK4IS|MINIIS/)) {
-            gcode = prusaIsGcode();
-        } else {
-            // legacy marlin linear advance
-            gcode = marlinGcode();
-        }
-    } else {
-        throw `Sorry, your firmware type is not supported yet`;
-    }
+    const gcode: PressureAdvanceGCode = selectPressureAdvanceGCodePrefix(flavour, printerModel, toolIndex);
 
     return new ExplainedValue("Pressure Advance Type", gcode, gcode.displayValue, new ExplanationPaGcode(slicerSettings.gcode_flavor, slicerSettings.printer_model));
+}
+
+export function selectPressureAdvanceGCodePrefix(flavour: string, printerModel: string, toolIndex: number): PressureAdvanceGCode {
+    let gcode: PressureAdvanceGCode;
+    if ('klipper'.localeCompare(flavour) === 0) {
+        return klipperGcode(toolIndex);
+    }
+    
+    if ('reprapfirmware'.localeCompare(flavour) === 0) {
+        return reprapfirmwareGcode(toolIndex);
+    }
+
+    // legacy marlin linear advance
+    if ('marlin'.localeCompare(flavour) === 0) {
+        return marlinGcode();
+    }
+    
+    if ('marlin2'.localeCompare(flavour) === 0) {
+        // Prusa changed from linear advance (M900) to pressure advance (M572) when they launched Input Shaping
+        // The most forward compatible solution is to assume M572 going forward for all marlin2 printers
+        // Legacy models with firmware before 5.0, use M900
+        if (!!printerModel.match(/^(XL|XL2|XL5|MK4|MINI)$/)) {
+            // legacy marlin linear advance
+            return marlinGcode();
+        } else {
+            // M572 pressure advance
+            return prusaIsGcode();
+        }
+    }
+
+    throw `Sorry, your firmware type is not supported yet`;
 }
 
 export class ExplainedValue<T> {
