@@ -66,7 +66,7 @@ function parseString(value: SettingValue<string>, toolNumber: number | null): vo
 
 function parseToolString(value: SettingValue<string>, toolNumber: number | null) {
     if (toolNumber == null) {
-        value.errors.push(`Can't unpack '${value.key}' (${value.raw}) because the setting for 'primary_extruder' is missing`);
+        value.errors.push(`Can't unpack '${value.key}' (${value.raw}) because the selected tool number is missing`);
         return;
     }
     let toolValues = value.raw.split(';');
@@ -85,6 +85,16 @@ export function parseSingleInt(value: SettingValue<number>, toolNumber: number |
     validateNumber(value);
 }
 
+
+export function parseArrayLength(value: SettingValue<number>, toolNumber: number | null): void {
+    if (value.raw === 'nil') {
+        return;
+    }
+    let toolValues = value.raw.split(',');
+    value.value = toolValues.length;
+    validateNumber(value);
+}
+
 export function parseSingleFloat(value: SettingValue<number>, toolNumber: number | null): void {
     if (value.raw === 'nil') {
         return;
@@ -95,7 +105,7 @@ export function parseSingleFloat(value: SettingValue<number>, toolNumber: number
 
 export function parseToolFloat(value: SettingValue<number>, toolNumber: number | null): void {
     if (toolNumber == null) {
-        value.errors.push(`Can't unpack '${value.key}' (${value.raw}) because the setting for 'primary_extruder' is missing`);
+        value.errors.push(`Can't unpack '${value.key}' (${value.raw}) because the selected tool number is missing`);
         return;
     }
     let toolValues = value.raw.split(',');
@@ -174,6 +184,7 @@ class RequiredSettingsDescriptors {
     start_gcode: SettingsDescriptor<string> = new SettingsDescriptor('start_gcode', parseString, describeString, true);
     filament_settings_id: SettingsDescriptor<string> = new SettingsDescriptor('filament_settings_id', parseToolString, describeString, true);
     bed_shape: SettingsDescriptor<BedShape> = new SettingsDescriptor('bed_shape', parseBedShape, describeBedShape, true);
+    num_tools: SettingsDescriptor<number> = new SettingsDescriptor('nozzle_diameter', parseArrayLength, describeNumber, true);
     nozzle_diameter: SettingsDescriptor<number> = new SettingsDescriptor('nozzle_diameter', parseToolFloat, describeMm, true);
     bed_temperature: SettingsDescriptor<number> = new SettingsDescriptor('bed_temperature', parseToolFloat, describeTemp, true);
     external_perimeter_extrusion_width: SettingsDescriptor<number> = new SettingsDescriptor('external_perimeter_extrusion_width', parseSingleFloat, describeMm, true);
@@ -222,15 +233,14 @@ class RequiredSettingsDescriptors {
     min_fan_speed: SettingsDescriptor<number> = new SettingsDescriptor('min_fan_speed', parseToolFloat, describePercent, true);
     
     max_volumetric_speed: SettingsDescriptor<number> = new SettingsDescriptor('max_volumetric_speed', parseSingleFloat, describeMmCubed, true);
-    filament_max_volumetric_speed: SettingsDescriptor<number> = new SettingsDescriptor('filament_max_volumetric_speed', parseSingleFloat, describeMmCubed, false);
+    filament_max_volumetric_speed: SettingsDescriptor<number> = new SettingsDescriptor('filament_max_volumetric_speed', parseToolFloat, describeMmCubed, false);
 }
 
 export function valueFromSetting<T>(foundSettings: Map<string, string>,
                                     descriptor: SettingsDescriptor<T>,
-                                    perimeter_extruder: SettingValue<number>,
+                                    toolNumber: number | null,
                                     allErrors: Array<Array<string>> = [],
                                     allSettings: Array<SettingValue<any>> = []): SettingValue<T> {
-    const toolNumber: number | null = perimeter_extruder?.value;
     let val: SettingValue<T> = new SettingValue<T>(descriptor.key, '');
     val.displayValue = '';
 
@@ -262,6 +272,7 @@ export class RequiredSlicerSettings {
     gcode_flavor: SettingValue<string>;
     filament_settings_id: SettingValue<string>;
     bed_shape: SettingValue<BedShape>;
+    num_tools: SettingValue<number>;
     nozzle_diameter: SettingValue<number>;
     bed_temperature: SettingValue<number>;
     external_perimeter_extrusion_width: SettingValue<number>;
@@ -302,22 +313,25 @@ export class RequiredSlicerSettings {
     max_volumetric_speed: SettingValue<number>;
     filament_max_volumetric_speed: SettingValue<number>;
     start_gcode: SettingValue<string>;
+    toolNumber: number | null;
 
     #toValue<T>(foundSettings: Map<string, string>, descriptor: SettingsDescriptor<T>): SettingValue<T> {
-        let val: SettingValue<T> = valueFromSetting(foundSettings, descriptor, this?.perimeter_extruder, this.#allErrors, this.allSettings);
+        let val: SettingValue<T> = valueFromSetting(foundSettings, descriptor, this.toolNumber, this.#allErrors, this.allSettings);
         if (this.#allErrors[this.#allErrors.length - 1].length > 0) {
             this.hasAllSettings = false;
         }
         return val;
     }
 
-    constructor(foundSettings: Map<string, string>) {
+    constructor(foundSettings: Map<string, string>, toolNumber: number | null = null) {
+        this.toolNumber = toolNumber;
         let descriptors = new RequiredSettingsDescriptors();
         this.perimeter_extruder = this.#toValue(foundSettings, descriptors.perimeter_extruder);
         this.printer_model = this.#toValue(foundSettings, descriptors.printer_model);
         this.gcode_flavor = this.#toValue(foundSettings, descriptors.gcode_flavor);
         this.filament_settings_id = this.#toValue(foundSettings, descriptors.filament_settings_id);
         this.bed_shape = this.#toValue(foundSettings, descriptors.bed_shape);
+        this.num_tools = this.#toValue(foundSettings, descriptors.num_tools);
         this.nozzle_diameter = this.#toValue(foundSettings, descriptors.nozzle_diameter);
         this.bed_temperature = this.#toValue(foundSettings, descriptors.bed_temperature);
         this.external_perimeter_extrusion_width = this.#toValue(foundSettings, descriptors.external_perimeter_extrusion_width);
@@ -377,6 +391,7 @@ export class GcodeProcessor {
     allLines: Array<string> = [];
     startLines: Array<string> = [];
     endLines: Array<string> = [];
+    toolNumber: number = 1;
     fileName: string = '';
     fileExtension: string = '';
     rawSettings: Map<string, string> = new Map();
@@ -423,7 +438,8 @@ export class GcodeProcessor {
         this.allLines = gcode.split(/\r?\n/);
         this.allLines = this.#stripTypeCustom();
         this.rawSettings = this.#extractPrusaSlicerSettings();
-        this.requiredSettings = new RequiredSlicerSettings(this.rawSettings);
+        this.toolNumber = this.#findToolNumber();
+        this.requiredSettings = new RequiredSlicerSettings(this.rawSettings, this.toolNumber);
         this.startLines = this.#findStartGcode();
         this.endLines = this.#findEndGcode();
     }
@@ -469,6 +485,18 @@ export class GcodeProcessor {
         }
         this.errors.push("Could not find the first line of the end gcode block. Missing <code>; Filament-specific end gcode</code> comment. Check in the filaments custom gcode settings.");
         return [];
+    }
+
+    #findToolNumber(): number {
+        const tool_pattern = new RegExp(/^\s*T(\d+)(?:\s|$)/);
+        for (var i = this.allLines.length - 1; i > 0; i--) {
+            const line = this.allLines[i];
+            const match = line.match(tool_pattern)
+            if (match !== null && match?.length == 2) {
+                return parseInt(match[1])
+            }
+        }
+        return 1;
     }
 
     get hasErrors(): boolean {

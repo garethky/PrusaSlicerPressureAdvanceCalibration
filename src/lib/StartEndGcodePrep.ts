@@ -105,7 +105,7 @@ export function prepareStartEndGcode(settings: RequiredSlicerSettings, patternCo
     }
 
     // Prusa Marlin & RRF
-    let toolIndex: number = settings.perimeter_extruder.toValue() - 1;
+    let toolIndex: number = patternConfig.toolNumber;
     let firstLayerTemp = settings.first_layer_temperature.toValue();
     let filamentTemp = patternConfig.filament_temperature.value;
 
@@ -117,4 +117,3 @@ export function prepareStartEndGcode(settings: RequiredSlicerSettings, patternCo
     // update M555 line is present
     replaceM555(patternConfig.startLines, patternConfig);
 }
-

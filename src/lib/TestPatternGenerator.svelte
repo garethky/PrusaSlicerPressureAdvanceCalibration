@@ -77,6 +77,10 @@
         <TestPatternSettingExplainer setting={$testPatternConfigStore.fan_speed} />
         <!-- Extrusion Params -->
         <tr><td colspan="3"><h4>Extrusion Settings</h4></td></tr>
+        {#if $testPatternConfigStore.num_tools.value > 1 }
+            <!-- Multi-Tool Printer detected -->
+            <TestPatternSettingExplainer setting={$testPatternConfigStore.tool_number} />
+        {/if}
         <TestPatternSettingExplainer setting={$testPatternConfigStore.nozzle_diameter} />
         <TestPatternSettingExplainer setting={$testPatternConfigStore.height_layer} />
         <TestPatternSettingExplainer setting={$testPatternConfigStore.extrusion_width} />

@@ -198,6 +198,8 @@ export class TestPatternConfiguration {
     filament: ExplainedValue<string>;
     filament_diameter: ExplainedValue<number>;
     filament_temperature: ExplainedValue<number>;
+    num_tools: ExplainedValue<number>;
+    tool_number: ExplainedValue<number>;
     nozzle_diameter: ExplainedValue<number>;
     height_layer: ExplainedValue<number>;
     extrusion_width: ExplainedValue<number>;
@@ -230,6 +232,7 @@ export class TestPatternConfiguration {
     null_center: boolean = false;
     startLines: string[];
     endLines: string[];
+    toolNumber: number;
     
 
     constructor(gcodeStore: GcodeProcessor, slicerSettings: RequiredSlicerSettings, paModel: PressureAdvanceModel) {
@@ -242,6 +245,10 @@ export class TestPatternConfiguration {
         // filament temperature
         this.filament_temperature = maxExplainedValue('Filament Temperature', [slicerSettings.temperature, slicerSettings.first_layer_temperature]);
         
+        this.num_tools = simpleExplainedValue('Number of Tools', slicerSettings.num_tools);
+        this.toolNumber = gcodeStore.toolNumber;
+        this.tool_number = new ExplainedValue('Selected Tool', this.toolNumber, `${this.toolNumber}`, 'Selected tool from GCode');
+
         // Nozzle Diameter
         this.nozzle_diameter = simpleExplainedValue('Nozzle Diameter', slicerSettings.nozzle_diameter);
         this.height_layer = simpleExplainedValue('Layer Height', slicerSettings.layer_height);
@@ -283,7 +290,7 @@ export class TestPatternConfiguration {
         const fanSpeed = fanOffLayer > 0 ? 0 : minFanSpeed;
         this.fan_speed = new ExplainedValue("Part Cooling Fan Speed", fanSpeed, `${fanSpeed}%`, new ExplanationFanSpeed(fanSpeed, slicerSettings.min_fan_speed, slicerSettings.disable_fan_first_layers));
 
-        const toolIndex = slicerSettings.perimeter_extruder.toValue() - 1;
+        const toolIndex = this.toolNumber - 1;
         this.advance_gcode_prefix = selectAdvanceGCodePrefix(slicerSettings, toolIndex);
         this.advance_step = paModel.step;
         let paModelString = `${paModel.lines.length} lines: ${paModel.lines[0]} ... ${paModel.lines[paModel.lines.length - 1]} in ${paModel.step} steps`;
