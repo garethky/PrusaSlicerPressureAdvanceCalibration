@@ -84,7 +84,7 @@ function klipperStartGocde(startLines: Array<string>, endLines: Array<string>, s
     startLines.push(...evaluateGcodeTemplate(startGcode, replacements));
     console.log(startLines);
     // add the recommended SCV override
-    // im not going to override acceleration, you should set your printer up to hit the limits n the slicer.
+    // im not going to override acceleration, you should set your printer up to hit the limits in the slicer.
     // changing hardware limits could be harmful to the printer
     startLines.push(`\nSET_VELOCITY_LIMIT SQUARE_CORNER_VELOCITY=1\n`);
     // srap the print in start/end object calls

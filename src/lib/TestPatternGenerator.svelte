@@ -54,9 +54,6 @@
         </tr>
     </thead>
     <tbody>
-        <tr>
-            <td colspan="3" class="alternate"><strong><strong>Filament</strong></strong></td>
-        </tr>
         <!-- Printer -->
         <TestPatternSettingExplainer setting={$testPatternConfigStore.printer} />
         <!-- Pressure Advance -->
