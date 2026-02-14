@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { valueFromSetting, SettingValue, parseSingleInt, parseSingleFloat, parseToolFloat, describeMm, SettingsDescriptor, RequiredSlicerSettings } from './GcodeProcessor';
+import { valueFromSetting, SettingValue, parseSingleInt, parseSingleFloat, parseToolFloat, describeMm, SettingsDescriptor, RequiredSlicerSettings, GcodeProcessor } from './GcodeProcessor';
 
 describe('nil values tests', () => {
     it('parseSingleFloat of nil is null', () => {
@@ -110,14 +110,14 @@ describe('multi-extruder nozzle selection', () => {
         let foundSettings = new Map<string, string>();
         foundSettings.set('nozzle_diameter', '0.4');
         const requiredSettings = new RequiredSlicerSettings(foundSettings, 1);
-        expect(requiredSettings.nozzle_diameter.value).toBe(0.4);
-        expect(requiredSettings.num_tools.value).toBe(1);
+        expect(requiredSettings.settings.nozzle_diameter.value).toBe(0.4);
+        expect(requiredSettings.settings.num_tools.value).toBe(1);
     });
     it('uses the selected tool nozzle diameter instead of defaulting to tool 1', () => {
         let foundSettings = new Map<string, string>();
         foundSettings.set('nozzle_diameter', '0.4,0.25');
         const requiredSettings = new RequiredSlicerSettings(foundSettings, 2);
-        expect(requiredSettings.nozzle_diameter.value).toBe(0.25);
-        expect(requiredSettings.num_tools.value).toBe(2);
+        expect(requiredSettings.settings.nozzle_diameter.value).toBe(0.25);
+        expect(requiredSettings.settings.num_tools.value).toBe(2);
     });
 });

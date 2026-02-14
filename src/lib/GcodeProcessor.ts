@@ -177,64 +177,72 @@ export function describeBedShape(value: SettingValue<BedShape>): void {
     value.displayValue = [value.value?.shape, ": ", '' + value.value?.x + "mm x " , '' + value.value?.y, 'mm'].join('');
 }
 
-class RequiredSettingsDescriptors {
-    perimeter_extruder: SettingsDescriptor<number> = new SettingsDescriptor('perimeter_extruder', parseSingleInt, describeNumber, true);
-    printer_model: SettingsDescriptor<string> = new SettingsDescriptor('printer_model', parseString, describeString, true);
-    gcode_flavor: SettingsDescriptor<string> = new SettingsDescriptor('gcode_flavor', parseString, describeString, true);
-    start_gcode: SettingsDescriptor<string> = new SettingsDescriptor('start_gcode', parseString, describeString, true);
-    filament_settings_id: SettingsDescriptor<string> = new SettingsDescriptor('filament_settings_id', parseToolString, describeString, true);
-    bed_shape: SettingsDescriptor<BedShape> = new SettingsDescriptor('bed_shape', parseBedShape, describeBedShape, true);
-    num_tools: SettingsDescriptor<number> = new SettingsDescriptor('nozzle_diameter', parseArrayLength, describeNumber, true);
-    nozzle_diameter: SettingsDescriptor<number> = new SettingsDescriptor('nozzle_diameter', parseToolFloat, describeMm, true);
-    bed_temperature: SettingsDescriptor<number> = new SettingsDescriptor('bed_temperature', parseToolFloat, describeTemp, true);
-    external_perimeter_extrusion_width: SettingsDescriptor<number> = new SettingsDescriptor('external_perimeter_extrusion_width', parseSingleFloat, describeMm, true);
-    extrusion_multiplier: SettingsDescriptor<number> = new SettingsDescriptor('extrusion_multiplier', parseToolFloat, describeNumber, true);
-    temperature: SettingsDescriptor<number> = new SettingsDescriptor('temperature', parseToolFloat, describeTemp, true);
-    first_layer_temperature: SettingsDescriptor<number> = new SettingsDescriptor('first_layer_temperature', parseToolFloat, describeTemp, true);
-    filament_diameter: SettingsDescriptor<number> = new SettingsDescriptor('filament_diameter', parseToolFloat, describeMm, true);
-    
+const requiredSettingsDescriptors = {
+    perimeter_extruder: new SettingsDescriptor('perimeter_extruder', parseSingleInt, describeNumber, true),
+    printer_model: new SettingsDescriptor('printer_model', parseString, describeString, true),
+    gcode_flavor: new SettingsDescriptor('gcode_flavor', parseString, describeString, true),
+    start_gcode: new SettingsDescriptor('start_gcode', parseString, describeString, true),
+    filament_settings_id: new SettingsDescriptor('filament_settings_id', parseToolString, describeString, true),
+    bed_shape: new SettingsDescriptor('bed_shape', parseBedShape, describeBedShape, true),
+    num_tools: new SettingsDescriptor('nozzle_diameter', parseArrayLength, describeNumber, true),
+    nozzle_diameter: new SettingsDescriptor('nozzle_diameter', parseToolFloat, describeMm, true),
+    bed_temperature: new SettingsDescriptor('bed_temperature', parseToolFloat, describeTemp, true),
+    external_perimeter_extrusion_width: new SettingsDescriptor('external_perimeter_extrusion_width', parseSingleFloat, describeMm, true),
+    extrusion_multiplier: new SettingsDescriptor('extrusion_multiplier', parseToolFloat, describeNumber, true),
+    temperature: new SettingsDescriptor('temperature', parseToolFloat, describeTemp, true),
+    first_layer_temperature: new SettingsDescriptor('first_layer_temperature', parseToolFloat, describeTemp, true),
+    filament_diameter: new SettingsDescriptor('filament_diameter', parseToolFloat, describeMm, true),
+
     // accelerations
-    perimeter_acceleration: SettingsDescriptor<number> = new SettingsDescriptor('perimeter_acceleration', parseSingleInt, describeMmsSquared, true);
-    external_perimeter_acceleration: SettingsDescriptor<number> = new SettingsDescriptor('external_perimeter_acceleration', parseSingleInt, describeMmsSquared, true);
-    first_layer_acceleration: SettingsDescriptor<number> = new SettingsDescriptor('first_layer_acceleration', parseSingleInt, describeMmsSquared, true);
-    machine_max_acceleration_extruding: SettingsDescriptor<number> = new SettingsDescriptor('machine_max_acceleration_extruding', parseSingleInt, describeMmsSquared, true);
-    infill_acceleration: SettingsDescriptor<number> = new SettingsDescriptor('infill_acceleration', parseSingleInt, describeMmsSquared, true);
-    solid_infill_acceleration: SettingsDescriptor<number> = new SettingsDescriptor('solid_infill_acceleration', parseSingleInt, describeMmsSquared, true);
-    top_solid_infill_acceleration: SettingsDescriptor<number> = new SettingsDescriptor('top_solid_infill_acceleration', parseSingleInt, describeMmsSquared, true);
-    travel_acceleration: SettingsDescriptor<number> = new SettingsDescriptor('travel_acceleration', parseSingleInt, describeMmsSquared, true);
-    default_acceleration: SettingsDescriptor<number> = new SettingsDescriptor('default_acceleration', parseSingleInt, describeMmsSquared, true);
+    perimeter_acceleration: new SettingsDescriptor('perimeter_acceleration', parseSingleInt, describeMmsSquared, true),
+    external_perimeter_acceleration: new SettingsDescriptor('external_perimeter_acceleration', parseSingleInt, describeMmsSquared, true),
+    first_layer_acceleration: new SettingsDescriptor('first_layer_acceleration', parseSingleInt, describeMmsSquared, true),
+    machine_max_acceleration_extruding: new SettingsDescriptor('machine_max_acceleration_extruding', parseSingleInt, describeMmsSquared, true),
+    infill_acceleration: new SettingsDescriptor('infill_acceleration', parseSingleInt, describeMmsSquared, true),
+    solid_infill_acceleration: new SettingsDescriptor('solid_infill_acceleration', parseSingleInt, describeMmsSquared, true),
+    top_solid_infill_acceleration: new SettingsDescriptor('top_solid_infill_acceleration', parseSingleInt, describeMmsSquared, true),
+    travel_acceleration: new SettingsDescriptor('travel_acceleration', parseSingleInt, describeMmsSquared, true),
+    default_acceleration: new SettingsDescriptor('default_acceleration', parseSingleInt, describeMmsSquared, true),
 
     // speeds
-    infill_speed: SettingsDescriptor<number> = new SettingsDescriptor('infill_speed', parseSingleFloat, describeMms, true);
-    solid_infill_speed: SettingsDescriptor<number> = new SettingsDescriptor('solid_infill_speed', parseSingleFloat, describeMms, true);
-    top_solid_infill_speed: SettingsDescriptor<number> = new SettingsDescriptor('top_solid_infill_speed', parseSingleFloat, describeMms, true);
-    perimeter_speed: SettingsDescriptor<number> = new SettingsDescriptor('perimeter_speed', parseSingleInt, describeMms, true);
-    travel_speed: SettingsDescriptor<number> = new SettingsDescriptor('travel_speed', parseSingleInt, describeMms, true);
+    infill_speed: new SettingsDescriptor('infill_speed', parseSingleFloat, describeMms, true),
+    solid_infill_speed: new SettingsDescriptor('solid_infill_speed', parseSingleFloat, describeMms, true),
+    top_solid_infill_speed: new SettingsDescriptor('top_solid_infill_speed', parseSingleFloat, describeMms, true),
+    perimeter_speed: new SettingsDescriptor('perimeter_speed', parseSingleInt, describeMms, true),
+    travel_speed: new SettingsDescriptor('travel_speed', parseSingleInt, describeMms, true),
 
-    perimeter_extrusion_width: SettingsDescriptor<number> = new SettingsDescriptor('perimeter_extrusion_width', parseSingleFloat, describeMm, true);
-    travel_speed_z: SettingsDescriptor<number> = new SettingsDescriptor('travel_speed_z', parseSingleInt, describeMms, true);
+    perimeter_extrusion_width: new SettingsDescriptor('perimeter_extrusion_width', parseSingleFloat, describeMm, true),
+    travel_speed_z: new SettingsDescriptor('travel_speed_z', parseSingleInt, describeMms, true),
 
     // retractions
-    retract_length: SettingsDescriptor<number> = new SettingsDescriptor('retract_length', parseToolFloat, describeMm, true);
-    retract_restart_extra: SettingsDescriptor<number> = new SettingsDescriptor('retract_restart_extra', parseToolFloat, describeMm, true);
-    retract_speed: SettingsDescriptor<number> = new SettingsDescriptor('retract_speed', parseToolFloat, describeMms, true);
-    deretract_speed: SettingsDescriptor<number> = new SettingsDescriptor('deretract_speed', parseToolFloat, describeMms, true);
-    retract_lift: SettingsDescriptor<number> = new SettingsDescriptor('retract_lift', parseToolFloat, describeMm, true);
+    retract_length: new SettingsDescriptor('retract_length', parseToolFloat, describeMm, true),
+    retract_restart_extra: new SettingsDescriptor('retract_restart_extra', parseToolFloat, describeMm, true),
+    retract_speed: new SettingsDescriptor('retract_speed', parseToolFloat, describeMms, true),
+    deretract_speed: new SettingsDescriptor('deretract_speed', parseToolFloat, describeMms, true),
+    retract_lift: new SettingsDescriptor('retract_lift', parseToolFloat, describeMm, true),
     // filament retraction overrides
-    filament_retract_length: SettingsDescriptor<number> = new SettingsDescriptor('filament_retract_length', parseToolFloat, describeMm, false);
-    filament_retract_restart_extra: SettingsDescriptor<number> = new SettingsDescriptor('retract_restart_extra', parseToolFloat, describeMm, false);
-    filament_retract_speed: SettingsDescriptor<number> = new SettingsDescriptor('filament_retract_speed', parseToolFloat, describeMms, false);
-    filament_deretract_speed: SettingsDescriptor<number> = new SettingsDescriptor('filament_deretract_speed', parseToolFloat, describeMms, false);
-    filament_retract_lift: SettingsDescriptor<number> = new SettingsDescriptor('filament_retract_lift', parseToolFloat, describeMm, false);
-    
-    layer_height: SettingsDescriptor<number> = new SettingsDescriptor('layer_height', parseSingleFloat, describeMm, true);
-    disable_fan_first_layers: SettingsDescriptor<number> = new SettingsDescriptor('disable_fan_first_layers', parseToolFloat, describeNumber, true);
-    first_layer_speed: SettingsDescriptor<number> = new SettingsDescriptor('first_layer_speed', parseSingleFloat, describeMms, true);
-    min_fan_speed: SettingsDescriptor<number> = new SettingsDescriptor('min_fan_speed', parseToolFloat, describePercent, true);
-    
-    max_volumetric_speed: SettingsDescriptor<number> = new SettingsDescriptor('max_volumetric_speed', parseSingleFloat, describeMmCubed, true);
-    filament_max_volumetric_speed: SettingsDescriptor<number> = new SettingsDescriptor('filament_max_volumetric_speed', parseToolFloat, describeMmCubed, false);
-}
+    filament_retract_length: new SettingsDescriptor('filament_retract_length', parseToolFloat, describeMm, false),
+    filament_retract_restart_extra: new SettingsDescriptor('retract_restart_extra', parseToolFloat, describeMm, false),
+    filament_retract_speed: new SettingsDescriptor('filament_retract_speed', parseToolFloat, describeMms, false),
+    filament_deretract_speed: new SettingsDescriptor('filament_deretract_speed', parseToolFloat, describeMms, false),
+    filament_retract_lift: new SettingsDescriptor('filament_retract_lift', parseToolFloat, describeMm, false),
+
+    layer_height: new SettingsDescriptor('layer_height', parseSingleFloat, describeMm, true),
+    disable_fan_first_layers: new SettingsDescriptor('disable_fan_first_layers', parseToolFloat, describeNumber, true),
+    first_layer_speed: new SettingsDescriptor('first_layer_speed', parseSingleFloat, describeMms, true),
+    min_fan_speed: new SettingsDescriptor('min_fan_speed', parseToolFloat, describePercent, true),
+
+    max_volumetric_speed: new SettingsDescriptor('max_volumetric_speed', parseSingleFloat, describeMmCubed, true),
+    filament_max_volumetric_speed: new SettingsDescriptor('filament_max_volumetric_speed', parseToolFloat, describeMmCubed, false),
+} as const;
+
+type RequiredSettingsDescriptorMap = typeof requiredSettingsDescriptors;
+type DescriptorValue<T> = T extends SettingsDescriptor<infer U> ? U : never;
+export type RequiredSettingKey = keyof RequiredSettingsDescriptorMap;
+export type RequiredSettingsValues = {
+    [K in RequiredSettingKey]: SettingValue<DescriptorValue<RequiredSettingsDescriptorMap[K]>>;
+};
+
 
 export function valueFromSetting<T>(foundSettings: Map<string, string>,
                                     descriptor: SettingsDescriptor<T>,
@@ -266,117 +274,34 @@ export class RequiredSlicerSettings {
     errors: Array<string> = []
     #allErrors: Array<Array<string>> = [];
     allSettings: Array<SettingValue<any>> = []
-
-    perimeter_extruder: SettingValue<number>;
-    printer_model: SettingValue<string>;
-    gcode_flavor: SettingValue<string>;
-    filament_settings_id: SettingValue<string>;
-    bed_shape: SettingValue<BedShape>;
-    num_tools: SettingValue<number>;
-    nozzle_diameter: SettingValue<number>;
-    bed_temperature: SettingValue<number>;
-    external_perimeter_extrusion_width: SettingValue<number>;
-    extrusion_multiplier: SettingValue<number>;
-    temperature: SettingValue<number>;
-    first_layer_temperature: SettingValue<number>;
-    filament_diameter: SettingValue<number>;
-    filament_retract_length: SettingValue<number>;
-    filament_retract_lift: SettingValue<number>;
-    infill_acceleration: SettingValue<number>;
-    perimeter_acceleration: SettingValue<number>;
-    external_perimeter_acceleration: SettingValue<number>;
-    first_layer_acceleration: SettingValue<number>;
-    machine_max_acceleration_extruding: SettingValue<number>;
-    solid_infill_acceleration: SettingValue<number>;
-    top_solid_infill_acceleration: SettingValue<number>;
-    travel_acceleration: SettingValue<number>;
-    default_acceleration: SettingValue<number>;
-    perimeter_extrusion_width: SettingValue<number>;
-    perimeter_speed: SettingValue<number>;
-    travel_speed: SettingValue<number>;
-    travel_speed_z: SettingValue<number>;
-    retract_length: SettingValue<number>;
-    filament_retract_restart_extra: SettingValue<number>;
-    filament_retract_speed: SettingValue<number>;
-    filament_deretract_speed: SettingValue<number>;
-    retract_lift: SettingValue<number>;
-    retract_restart_extra: SettingValue<number>;
-    retract_speed: SettingValue<number>;
-    deretract_speed: SettingValue<number>;
-    layer_height: SettingValue<number>;
-    disable_fan_first_layers: SettingValue<number>;
-    first_layer_speed: SettingValue<number>;
-    min_fan_speed: SettingValue<number>;
-    infill_speed: SettingValue<number>;
-    solid_infill_speed: SettingValue<number>;
-    top_solid_infill_speed: SettingValue<number>;
-    max_volumetric_speed: SettingValue<number>;
-    filament_max_volumetric_speed: SettingValue<number>;
-    start_gcode: SettingValue<string>;
+    settings: RequiredSettingsValues;
     toolNumber: number | null;
-
-    #toValue<T>(foundSettings: Map<string, string>, descriptor: SettingsDescriptor<T>): SettingValue<T> {
-        let val: SettingValue<T> = valueFromSetting(foundSettings, descriptor, this.toolNumber, this.#allErrors, this.allSettings);
-        if (this.#allErrors[this.#allErrors.length - 1].length > 0) {
-            this.hasAllSettings = false;
-        }
-        return val;
-    }
 
     constructor(foundSettings: Map<string, string>, toolNumber: number | null = null) {
         this.toolNumber = toolNumber;
-        let descriptors = new RequiredSettingsDescriptors();
-        this.perimeter_extruder = this.#toValue(foundSettings, descriptors.perimeter_extruder);
-        this.printer_model = this.#toValue(foundSettings, descriptors.printer_model);
-        this.gcode_flavor = this.#toValue(foundSettings, descriptors.gcode_flavor);
-        this.filament_settings_id = this.#toValue(foundSettings, descriptors.filament_settings_id);
-        this.bed_shape = this.#toValue(foundSettings, descriptors.bed_shape);
-        this.num_tools = this.#toValue(foundSettings, descriptors.num_tools);
-        this.nozzle_diameter = this.#toValue(foundSettings, descriptors.nozzle_diameter);
-        this.bed_temperature = this.#toValue(foundSettings, descriptors.bed_temperature);
-        this.external_perimeter_extrusion_width = this.#toValue(foundSettings, descriptors.external_perimeter_extrusion_width);
-        this.extrusion_multiplier = this.#toValue(foundSettings, descriptors.extrusion_multiplier);
-        this.temperature = this.#toValue(foundSettings, descriptors.temperature);
-        this.first_layer_temperature = this.#toValue(foundSettings, descriptors.first_layer_temperature);
-        this.filament_diameter = this.#toValue(foundSettings, descriptors.filament_diameter);
-        this.retract_lift = this.#toValue(foundSettings, descriptors.retract_lift);
-        this.retract_length = this.#toValue(foundSettings, descriptors.retract_length);
-        this.retract_restart_extra = this.#toValue(foundSettings, descriptors.retract_restart_extra);
-        this.retract_speed = this.#toValue(foundSettings, descriptors.retract_speed);
-        this.deretract_speed = this.#toValue(foundSettings, descriptors.deretract_speed);
-        this.filament_retract_lift = this.#toValue(foundSettings, descriptors.filament_retract_lift);
-        this.filament_retract_length = this.#toValue(foundSettings, descriptors.filament_retract_length);
-        this.filament_retract_restart_extra = this.#toValue(foundSettings, descriptors.filament_retract_restart_extra);
-        this.filament_retract_speed = this.#toValue(foundSettings, descriptors.filament_retract_speed);
-        this.filament_deretract_speed = this.#toValue(foundSettings, descriptors.filament_deretract_speed);
-        this.infill_acceleration = this.#toValue(foundSettings, descriptors.infill_acceleration);
-        this.perimeter_acceleration = this.#toValue(foundSettings, descriptors.perimeter_acceleration);
-        this.external_perimeter_acceleration = this.#toValue(foundSettings, descriptors.external_perimeter_acceleration);
-        this.first_layer_acceleration = this.#toValue(foundSettings, descriptors.first_layer_acceleration);
-        this.machine_max_acceleration_extruding = this.#toValue(foundSettings, descriptors.machine_max_acceleration_extruding);
-        this.solid_infill_acceleration = this.#toValue(foundSettings, descriptors.solid_infill_acceleration);
-        this.top_solid_infill_acceleration = this.#toValue(foundSettings, descriptors.top_solid_infill_acceleration);
-        this.travel_acceleration = this.#toValue(foundSettings, descriptors.travel_acceleration);
-        this.default_acceleration = this.#toValue(foundSettings, descriptors.default_acceleration);
-        this.perimeter_extrusion_width = this.#toValue(foundSettings, descriptors.perimeter_extrusion_width);
-        this.perimeter_speed = this.#toValue(foundSettings, descriptors.perimeter_speed);
-        this.solid_infill_speed = this.#toValue(foundSettings, descriptors.solid_infill_speed);
-        this.top_solid_infill_speed = this.#toValue(foundSettings, descriptors.top_solid_infill_speed);
-        this.travel_speed = this.#toValue(foundSettings, descriptors.travel_speed);
-        this.travel_speed_z = this.#toValue(foundSettings, descriptors.travel_speed_z);
-        this.layer_height = this.#toValue(foundSettings, descriptors.layer_height);
-        this.disable_fan_first_layers = this.#toValue(foundSettings, descriptors.disable_fan_first_layers);
-        this.first_layer_speed = this.#toValue(foundSettings, descriptors.first_layer_speed);
-        this.min_fan_speed = this.#toValue(foundSettings, descriptors.min_fan_speed);
-        this.infill_speed = this.#toValue(foundSettings, descriptors.infill_speed);
-        this.max_volumetric_speed = this.#toValue(foundSettings, descriptors.max_volumetric_speed);
-        this.filament_max_volumetric_speed = this.#toValue(foundSettings, descriptors.filament_max_volumetric_speed);
-        this.start_gcode = this.#toValue(foundSettings, descriptors.start_gcode);
-        // concat all errors
+        const resolvedSettings = {} as RequiredSettingsValues;
+        const keys = Object.keys(requiredSettingsDescriptors) as RequiredSettingKey[];
+        const resolveSetting = <K extends RequiredSettingKey>(key: K): RequiredSettingsValues[K] => {
+            const descriptor = requiredSettingsDescriptors[key] as SettingsDescriptor<DescriptorValue<RequiredSettingsDescriptorMap[K]>>;
+            return valueFromSetting(foundSettings, descriptor, this.toolNumber, this.#allErrors, this.allSettings) as RequiredSettingsValues[K];
+        };
+        const assignSetting = <K extends RequiredSettingKey>(key: K, value: RequiredSettingsValues[K]) => {
+            resolvedSettings[key] = value;
+        };
+        for (const key of keys) {
+            const val = resolveSetting(key);
+            if (this.#allErrors[this.#allErrors.length - 1].length > 0) {
+                this.hasAllSettings = false;
+            }
+            assignSetting(key, val);
+        }
+        this.settings = resolvedSettings;
         this.#allErrors.forEach(val => { this.errors.push(...val) });
         this.errorCount = this.errors.length;
         this.hasErrors = this.errorCount > 0;
     }
+
+    // Access settings via this.settings to keep key usage type-safe.
 }
 
 /**

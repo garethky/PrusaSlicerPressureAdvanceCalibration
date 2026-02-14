@@ -79,11 +79,12 @@ function maxVolumetricSpeed(requestedSpeed: number, extrusionWidth: number, laye
 }
 
 function selectAdvanceGCodePrefix(slicerSettings: RequiredSlicerSettings, toolIndex: number) {
-    let flavour = slicerSettings.gcode_flavor.toValue();
-    let printerModel = slicerSettings.printer_model.toValue();
+    const settings = slicerSettings.settings;
+    let flavour = settings.gcode_flavor.toValue();
+    let printerModel = settings.printer_model.toValue();
     const gcode: PressureAdvanceGCode = selectPressureAdvanceGCodePrefix(flavour, printerModel, toolIndex);
 
-    return new ExplainedValue("Pressure Advance Type", gcode, gcode.displayValue, new ExplanationPaGcode(slicerSettings.gcode_flavor, slicerSettings.printer_model));
+    return new ExplainedValue("Pressure Advance Type", gcode, gcode.displayValue, new ExplanationPaGcode(settings.gcode_flavor, settings.printer_model));
 }
 
 export function selectPressureAdvanceGCodePrefix(flavour: string, printerModel: string, toolIndex: number): PressureAdvanceGCode {
@@ -165,8 +166,9 @@ function maxExplainedValue(name: string, values: Array<SettingValue<number>>, de
 }
 
 function explainMaxSpeed(slicerSettings: RequiredSlicerSettings) {
-    const maxVolumetricFlow = slicerSettings.max_volumetric_speed.toValue();
-    const maxFilamentVolumetricFlow = slicerSettings.filament_max_volumetric_speed.toValue();
+    const settings = slicerSettings.settings;
+    const maxVolumetricFlow = settings.max_volumetric_speed.toValue();
+    const maxFilamentVolumetricFlow = settings.filament_max_volumetric_speed.toValue();
     let flowRate: number;
     if (!!maxFilamentVolumetricFlow && maxFilamentVolumetricFlow > 0) {
         flowRate = maxFilamentVolumetricFlow;
@@ -175,14 +177,14 @@ function explainMaxSpeed(slicerSettings: RequiredSlicerSettings) {
     } else {
         throw 'No Volumetric Flow Rate setting was found.';
     }
-    const extrusionWidth = slicerSettings.perimeter_extrusion_width.toValue();
-    const layerHeight = slicerSettings.layer_height.toValue();
-    const speedInfill = slicerSettings.infill_speed.toValue();
+    const extrusionWidth = settings.perimeter_extrusion_width.toValue();
+    const layerHeight = settings.layer_height.toValue();
+    const speedInfill = settings.infill_speed.toValue();
     const maxSpeed = flowRate / (extrusionWidth * layerHeight);
     const speedFast = Math.min(maxSpeed, speedInfill);
     return new ExplainedValue('Test Fast Extrusion Speed', speedFast, `${speedFast} mm/s`, new ExplanationVolumetricFlow(
-        [slicerSettings.infill_speed],
-        [slicerSettings.max_volumetric_speed, slicerSettings.filament_max_volumetric_speed],
+        [settings.infill_speed],
+        [settings.max_volumetric_speed, settings.filament_max_volumetric_speed],
         `${maxSpeed.toFixed()} mm/s`, `${speedFast.toFixed()} mm/s`
     ));
 }
@@ -236,59 +238,66 @@ export class TestPatternConfiguration {
     
 
     constructor(gcodeStore: GcodeProcessor, slicerSettings: RequiredSlicerSettings, paModel: PressureAdvanceModel) {
-        this.printer = simpleExplainedValue( 'Printer', slicerSettings.printer_model);
-        this.filament = simpleExplainedValue('Filament Preset', slicerSettings.filament_settings_id);
+        const settings = slicerSettings.settings;
+        this.printer = simpleExplainedValue( 'Printer', settings.printer_model);
+        this.filament = simpleExplainedValue('Filament Preset', settings.filament_settings_id);
 
-        let diameter = slicerSettings.filament_diameter;
+        let diameter = settings.filament_diameter;
         this.filament_diameter = simpleExplainedValue('Filament Diameter', diameter);
 
         // filament temperature
-        this.filament_temperature = maxExplainedValue('Filament Temperature', [slicerSettings.temperature, slicerSettings.first_layer_temperature]);
-        
-        this.num_tools = simpleExplainedValue('Number of Tools', slicerSettings.num_tools);
+        this.filament_temperature = maxExplainedValue('Filament Temperature', [settings.temperature, settings.first_layer_temperature]);
+
+        this.num_tools = simpleExplainedValue('Number of Tools', settings.num_tools);
         this.toolNumber = gcodeStore.toolNumber;
         this.tool_number = new ExplainedValue('Selected Tool', this.toolNumber, `${this.toolNumber}`, 'Selected tool from GCode');
 
         // Nozzle Diameter
-        this.nozzle_diameter = simpleExplainedValue('Nozzle Diameter', slicerSettings.nozzle_diameter);
-        this.height_layer = simpleExplainedValue('Layer Height', slicerSettings.layer_height);
-        this.extrusion_width = simpleExplainedValue('Extrusion Width', slicerSettings.perimeter_extrusion_width);
-        this.extrusion_multiplier = simpleExplainedValue('Extrusion Multiplier', slicerSettings.extrusion_multiplier);
-        
+        this.nozzle_diameter = simpleExplainedValue('Nozzle Diameter', settings.nozzle_diameter);
+        this.height_layer = simpleExplainedValue('Layer Height', settings.layer_height);
+        this.extrusion_width = simpleExplainedValue('Extrusion Width', settings.perimeter_extrusion_width);
+        this.extrusion_multiplier = simpleExplainedValue('Extrusion Multiplier', settings.extrusion_multiplier);
+
         // z hop
-        this.zHopHeight = filamentOverrideExplainedValue('Z-Hop Height', slicerSettings.retract_lift, slicerSettings.filament_retract_lift);
+        this.zHopHeight = filamentOverrideExplainedValue('Z-Hop Height', settings.retract_lift, settings.filament_retract_lift);
 
         // speeds
-        this.travelAcceleration = simpleExplainedValue('Travel Acceleration', slicerSettings.travel_acceleration.toValue() > 0 ? slicerSettings.travel_acceleration : slicerSettings.default_acceleration);
-        this.testAcceleration = maxExplainedValue('Test Acceleration', [slicerSettings.perimeter_acceleration, slicerSettings.infill_acceleration, slicerSettings.solid_infill_acceleration, slicerSettings.top_solid_infill_acceleration, slicerSettings.external_perimeter_acceleration], slicerSettings.default_acceleration);
-        this.printAcceleration = simpleExplainedValue('Print Acceleration', slicerSettings.first_layer_acceleration.toValue() > 0 ? slicerSettings.first_layer_acceleration : slicerSettings.default_acceleration);
-        
-        this.speed_print = simpleExplainedValue('Printing Speed', slicerSettings.first_layer_speed);
-        this.speed_slow = simpleExplainedValue('Test Slow Extrusion Speed', slicerSettings.first_layer_speed);
+        const travelAcceleration = settings.travel_acceleration;
+        const defaultAcceleration = settings.default_acceleration;
+        this.travelAcceleration = simpleExplainedValue('Travel Acceleration', travelAcceleration.toValue() > 0 ? travelAcceleration : defaultAcceleration);
+        this.testAcceleration = maxExplainedValue('Test Acceleration', [settings.perimeter_acceleration, settings.infill_acceleration, settings.solid_infill_acceleration, settings.top_solid_infill_acceleration, settings.external_perimeter_acceleration], defaultAcceleration);
+        const firstLayerAcceleration = settings.first_layer_acceleration;
+        this.printAcceleration = simpleExplainedValue('Print Acceleration', firstLayerAcceleration.toValue() > 0 ? firstLayerAcceleration : defaultAcceleration);
+
+        const firstLayerSpeed = settings.first_layer_speed;
+        this.speed_print = simpleExplainedValue('Printing Speed', firstLayerSpeed);
+        this.speed_slow = simpleExplainedValue('Test Slow Extrusion Speed', firstLayerSpeed);
         this.speed_fast = explainMaxSpeed(slicerSettings);
-        this.speed_move = simpleExplainedValue('Travel Speed', slicerSettings.travel_speed);
+        this.speed_move = simpleExplainedValue('Travel Speed', settings.travel_speed);
         // if there is no z travel speed, fall back to normal travel speed
-        this.speed_move_z = simpleExplainedValue('Z Movement Speed', slicerSettings.travel_speed_z.toValue() > 0 ? slicerSettings.travel_speed_z : slicerSettings.travel_speed);
+        const travelSpeedZ = settings.travel_speed_z;
+        const travelSpeed = settings.travel_speed;
+        this.speed_move_z = simpleExplainedValue('Z Movement Speed', travelSpeedZ.toValue() > 0 ? travelSpeedZ : travelSpeed);
 
         // retractions
-        this.retract_dist = filamentOverrideExplainedValue('Retract Length', slicerSettings.retract_length, slicerSettings.filament_retract_length);
-        let deretractOverride = slicerSettings.filament_retract_restart_extra.value !== null ? slicerSettings.filament_retract_restart_extra : slicerSettings.retract_restart_extra
+        this.retract_dist = filamentOverrideExplainedValue('Retract Length', settings.retract_length, settings.filament_retract_length);
+        const deretractOverride = settings.filament_retract_restart_extra.value !== null ? settings.filament_retract_restart_extra : settings.retract_restart_extra;
         this.deretract_dist = sumExplainedValue('Deretraction Length', 'mm', [this.retract_dist.explanation as SettingValue<number>, deretractOverride]);
-        this.retract_speed = filamentOverrideExplainedValue('Retraction Speed', slicerSettings.retract_speed, slicerSettings.filament_retract_speed);
-        this.deretract_speed = filamentOverrideExplainedValue('Deretraction Speed', slicerSettings.deretract_speed, slicerSettings.filament_deretract_speed);
+        this.retract_speed = filamentOverrideExplainedValue('Retraction Speed', settings.retract_speed, settings.filament_retract_speed);
+        this.deretract_speed = filamentOverrideExplainedValue('Deretraction Speed', settings.deretract_speed, settings.filament_deretract_speed);
         // TODO: bring back firmware retractions... maybe
 
         // bed shape
-        let bedShape = slicerSettings.bed_shape.toValue();
-        this.bed_shape = new ExplainedValue("Bed Shape", bedShape.shape, bedShape.shape, slicerSettings.bed_shape);
-        this.bed_x = new ExplainedValue("Bed X Axis Size", bedShape.x, `${bedShape.x} mm`, slicerSettings.bed_shape);
-        this.bed_y = new ExplainedValue("Bed Y Axis Size", bedShape.y, `${bedShape.y} mm`, slicerSettings.bed_shape);
-        
+        let bedShape = settings.bed_shape.toValue();
+        this.bed_shape = new ExplainedValue("Bed Shape", bedShape.shape, bedShape.shape, settings.bed_shape);
+        this.bed_x = new ExplainedValue("Bed X Axis Size", bedShape.x, `${bedShape.x} mm`, settings.bed_shape);
+        this.bed_y = new ExplainedValue("Bed Y Axis Size", bedShape.y, `${bedShape.y} mm`, settings.bed_shape);
+
         // turn fan off if disable_fan_first_layers is higher than 0
-        const fanOffLayer = slicerSettings.disable_fan_first_layers.toValue();
-        const minFanSpeed = slicerSettings.min_fan_speed.toValue();
+        const fanOffLayer = settings.disable_fan_first_layers.toValue();
+        const minFanSpeed = settings.min_fan_speed.toValue();
         const fanSpeed = fanOffLayer > 0 ? 0 : minFanSpeed;
-        this.fan_speed = new ExplainedValue("Part Cooling Fan Speed", fanSpeed, `${fanSpeed}%`, new ExplanationFanSpeed(fanSpeed, slicerSettings.min_fan_speed, slicerSettings.disable_fan_first_layers));
+        this.fan_speed = new ExplainedValue("Part Cooling Fan Speed", fanSpeed, `${fanSpeed}%`, new ExplanationFanSpeed(fanSpeed, settings.min_fan_speed, settings.disable_fan_first_layers));
 
         const toolIndex = this.toolNumber - 1;
         this.advance_gcode_prefix = selectAdvanceGCodePrefix(slicerSettings, toolIndex);

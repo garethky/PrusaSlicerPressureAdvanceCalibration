@@ -32,9 +32,12 @@
             if (requiredSettings && $gcodeStore?.hasErrors == false) {
                 settings = requiredSettings;
                 try {
+                    const slicerSettings = requiredSettings.settings;
                     $testPatternConfigStore = new TestPatternConfiguration($gcodeStore, requiredSettings, $pressureAdvanceStore);
                     canDownload = true;
-                    filename = `PA-Test_${requiredSettings.printer_model.displayValue}_${requiredSettings.filament_settings_id.displayValue}_PA_${$pressureAdvanceStore.start}-to-${$pressureAdvanceStore.end}.gcode`;
+                    const printerModel = slicerSettings.printer_model.displayValue;
+                    const filamentPreset = slicerSettings.filament_settings_id.displayValue;
+                    filename = `PA-Test_${printerModel}_${filamentPreset}_PA_${$pressureAdvanceStore.start}-to-${$pressureAdvanceStore.end}.gcode`;
                 }
                 catch (ex) {
                     error = "Test pattern generation failed: " + ex;

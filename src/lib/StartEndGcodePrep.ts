@@ -60,7 +60,7 @@ function klipperStartGocde(startLines: Array<string>, endLines: Array<string>, s
         xCenter = (x + (printArea.width / 2)).toFixed(3),
         yCenter = (y + (printArea.height / 2)).toFixed(3),
         temp = '' + patternConfig.filament_temperature.value,
-        bedTemp = '' + settings.bed_temperature.toValue(),
+        bedTemp = '' + settings.settings.bed_temperature.toValue(),
         replacements: Map<string, string[]> = new Map([
             // bare minimum set of variables that klipper users are likely to need
             // TODO: arrays with all same values should be sized according to the number of tool reported in the machine
@@ -97,16 +97,17 @@ function klipperStartGocde(startLines: Array<string>, endLines: Array<string>, s
 // This only needs to be done if the first layer temp is less than the filament temp
 // TODO: it would be nice to prepare an diff so the user can inspect it. Like the changed bits in bold or something
 export function prepareStartEndGcode(settings: RequiredSlicerSettings, patternConfig: TestPatternConfiguration) {
+    const slicerSettings = settings.settings;
     // Klipper
-    let gcodeFlavour: string = settings.gcode_flavor.toValue();
+    let gcodeFlavour: string = slicerSettings.gcode_flavor.toValue();
     if (gcodeFlavour === 'klipper') {
-        klipperStartGocde(patternConfig.startLines, patternConfig.endLines, settings.start_gcode.toValue(), settings, patternConfig);
+        klipperStartGocde(patternConfig.startLines, patternConfig.endLines, slicerSettings.start_gcode.toValue(), settings, patternConfig);
         return;
     }
 
     // Prusa Marlin & RRF
     let toolIndex: number = patternConfig.toolNumber;
-    let firstLayerTemp = settings.first_layer_temperature.toValue();
+    let firstLayerTemp = slicerSettings.first_layer_temperature.toValue();
     let filamentTemp = patternConfig.filament_temperature.value;
 
     // in start gcode the extruder is set to the first layer temp.
