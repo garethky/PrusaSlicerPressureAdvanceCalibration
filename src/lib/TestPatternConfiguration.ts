@@ -2,7 +2,7 @@ import { writable } from 'svelte/store';
 import type { GcodeProcessor, RequiredSlicerSettings, SettingValue } from './GcodeProcessor';
 import type { PressureAdvanceModel } from './PressureAdvanceModel';
 import {type Explanation, ExplanationMaxOf, ExplanationVolumetricFlow, ExplanationSumOf, ExplanationFanSpeed, ExplanationPaGcode, ExplanationArray } from './TestPatternSettingExplainer';
-import { validatePatternConfig } from './TestPatternGenerator';
+import { validatePrintArea as validatePrintArea } from './TestPatternGenerator';
 import { prepareStartEndGcode } from './StartEndGcodePrep';
 
 export class PrintArea {
@@ -71,11 +71,29 @@ function marlinGcode(): PressureAdvanceGCode {
     };
 }
 
-// sometimes the max speed requested in a profile exceeds the max volumetric speed of the filament or printer
-// pick the min of volumetric flow rate limit and requested speed
-function maxVolumetricSpeed(requestedSpeed: number, extrusionWidth: number, layerHeight: number, maxVolumetricFlow: number) {
-    const maxSpeed = maxVolumetricFlow / (extrusionWidth * layerHeight);
-    return Math.min(maxSpeed, requestedSpeed);
+// Resolve the effective volumetric flow rate from printer and filament settings.
+// Returns the flow rate in mm³/s, or null if neither setting has a positive value.
+function effectiveVolumetricFlowRate(slicerSettings: RequiredSlicerSettings): number | null {
+    const settings = slicerSettings.settings;
+    const maxFilamentVolumetricFlow = settings.filament_max_volumetric_speed.toValue();
+    if (!!maxFilamentVolumetricFlow && maxFilamentVolumetricFlow > 0) {
+        return maxFilamentVolumetricFlow;
+    }
+    const maxVolumetricFlow = settings.max_volumetric_speed.toValue();
+    if (!!maxVolumetricFlow && maxVolumetricFlow > 0) {
+        return maxVolumetricFlow;
+    }
+    return null;
+}
+
+// Convert a volumetric flow rate limit to a max linear speed given extrusion geometry.
+function volumetricFlowToSpeed(flowRate: number, extrusionWidth: number, layerHeight: number): number {
+    return flowRate / (extrusionWidth * layerHeight);
+}
+
+// Clamp a speed to the volumetric flow rate limit. Returns the clamped speed.
+function clampSpeedToVolumetricFlow(requestedSpeed: number, maxLinearSpeed: number): number {
+    return Math.min(requestedSpeed, maxLinearSpeed);
 }
 
 function selectAdvanceGCodePrefix(slicerSettings: RequiredSlicerSettings, toolIndex: number) {
@@ -165,27 +183,14 @@ function maxExplainedValue(name: string, values: Array<SettingValue<number>>, de
     throw "No max value found, all values are null or 0!";
 }
 
-function explainMaxSpeed(slicerSettings: RequiredSlicerSettings) {
+function explainClampedSpeed(name: string, slicerSettings: RequiredSlicerSettings, speedSetting: SettingValue<number>, maxLinearSpeed: number): ExplainedValue<number> {
     const settings = slicerSettings.settings;
-    const maxVolumetricFlow = settings.max_volumetric_speed.toValue();
-    const maxFilamentVolumetricFlow = settings.filament_max_volumetric_speed.toValue();
-    let flowRate: number;
-    if (!!maxFilamentVolumetricFlow && maxFilamentVolumetricFlow > 0) {
-        flowRate = maxFilamentVolumetricFlow;
-    } else if (!!maxVolumetricFlow && maxVolumetricFlow > 0) {
-        flowRate = maxVolumetricFlow;
-    } else {
-        throw 'No Volumetric Flow Rate setting was found.';
-    }
-    const extrusionWidth = settings.perimeter_extrusion_width.toValue();
-    const layerHeight = settings.layer_height.toValue();
-    const speedInfill = settings.infill_speed.toValue();
-    const maxSpeed = flowRate / (extrusionWidth * layerHeight);
-    const speedFast = Math.min(maxSpeed, speedInfill);
-    return new ExplainedValue('Test Fast Extrusion Speed', speedFast, `${speedFast} mm/s`, new ExplanationVolumetricFlow(
-        [settings.infill_speed],
+    const requestedSpeed = speedSetting.toValue();
+    const clampedSpeed = clampSpeedToVolumetricFlow(requestedSpeed, maxLinearSpeed);
+    return new ExplainedValue(name, clampedSpeed, `${clampedSpeed} mm/s`, new ExplanationVolumetricFlow(
+        [speedSetting],
         [settings.max_volumetric_speed, settings.filament_max_volumetric_speed],
-        `${maxSpeed.toFixed()} mm/s`, `${speedFast.toFixed()} mm/s`
+        `${maxLinearSpeed.toFixed()} mm/s`, `${clampedSpeed.toFixed()} mm/s`
     ));
 }
 
@@ -235,6 +240,8 @@ export class TestPatternConfiguration {
     startLines: string[];
     endLines: string[];
     toolIndex: number;
+    warnings: Array<string> = [];
+    errors: Array<string> = [];
     
 
     constructor(gcodeStore: GcodeProcessor, slicerSettings: RequiredSlicerSettings, paModel: PressureAdvanceModel) {
@@ -270,9 +277,36 @@ export class TestPatternConfiguration {
         this.printAcceleration = simpleExplainedValue('Print Acceleration', firstLayerAcceleration.toValue() > 0 ? firstLayerAcceleration : defaultAcceleration);
 
         const firstLayerSpeed = settings.first_layer_speed;
-        this.speed_print = simpleExplainedValue('Printing Speed', firstLayerSpeed);
-        this.speed_slow = simpleExplainedValue('Test Slow Extrusion Speed', firstLayerSpeed);
-        this.speed_fast = explainMaxSpeed(slicerSettings);
+        const flowRate = effectiveVolumetricFlowRate(slicerSettings);
+        if (flowRate === null) {
+            throw 'No Volumetric Flow Rate setting was found.';
+        }
+        const extrusionWidth = settings.perimeter_extrusion_width.toValue();
+        const layerHeight = settings.layer_height.toValue();
+        const maxLinearSpeed = volumetricFlowToSpeed(flowRate, extrusionWidth, layerHeight);
+
+        this.speed_print = explainClampedSpeed('Printing Speed', slicerSettings, firstLayerSpeed, maxLinearSpeed);
+        this.speed_slow = explainClampedSpeed('Test Slow Extrusion Speed', slicerSettings, firstLayerSpeed, maxLinearSpeed);
+        this.speed_fast = explainClampedSpeed('Test Fast Extrusion Speed', slicerSettings, settings.infill_speed, maxLinearSpeed);
+
+        // Warn if slow/print speeds were clamped by volumetric flow limit
+        const rawFirstLayerSpeed = firstLayerSpeed.toValue();
+        if (this.speed_slow.value < rawFirstLayerSpeed) {
+            this.warnings.push(
+                `First layer speed (${rawFirstLayerSpeed} mm/s) exceeds the volumetric flow rate limit (${maxLinearSpeed.toFixed(1)} mm/s). ` +
+                `Printing Speed and Test Slow Speed have been clamped to ${this.speed_slow.value.toFixed(1)} mm/s.`
+            );
+        }
+
+        // Validate that fast speed is strictly greater than slow speed
+        if (this.speed_fast.value <= this.speed_slow.value) {
+            this.errors.push(
+                `Test Fast Speed (${this.speed_fast.value.toFixed(1)} mm/s) is not faster than Test Slow Speed (${this.speed_slow.value.toFixed(1)} mm/s). ` +
+                `The filament's volumetric flow rate limit (${flowRate} mm³/s) restricts the maximum print speed to ${maxLinearSpeed.toFixed(1)} mm/s. ` +
+                `The test pattern requires the fast speed to be greater than the slow speed to produce a valid calibration. ` +
+                `Try reducing the first layer speed in your print profile or increasing the volumetric flow rate limit.`
+            );
+        }
         this.speed_move = simpleExplainedValue('Travel Speed', settings.travel_speed);
         // if there is no z travel speed, fall back to normal travel speed
         const travelSpeedZ = settings.travel_speed_z;
@@ -304,7 +338,7 @@ export class TestPatternConfiguration {
         let paModelString = `${paModel.lines.length} lines: ${paModel.lines[0]} ... ${paModel.lines[paModel.lines.length - 1]} in ${paModel.step} steps`;
         this.advance_lines = new ExplainedValue('Pressure Advance Test Values', paModel.lines, paModelString, new ExplanationArray(paModel.lines));
 
-        let printArea = validatePatternConfig(this);
+        let printArea = validatePrintArea(this);
         this.print_area = new ExplainedValue("Print Area", printArea, printArea.description(), 'Calculated Print Area');
 
         this.startLines = gcodeStore.startLines.slice(0);

@@ -52,7 +52,7 @@ type PatternSettings = {
 
 const LINE_SPACING: number =  4.0;
 
-export function validatePatternConfig(calibrationParams: TestPatternConfiguration): PrintArea {
+export function validatePrintArea(calibrationParams: TestPatternConfiguration): PrintArea {
     const 
         centerX = (calibrationParams.null_center ? 0 : calibrationParams.bed_x.value / 2),
         centerY = (calibrationParams.null_center ? 0 : calibrationParams.bed_y.value / 2),

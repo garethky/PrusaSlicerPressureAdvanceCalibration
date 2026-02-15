@@ -24,9 +24,13 @@
         FileSaver(blob, filename);
     }
 
+    let warnings: Array<string> = [];
+
     $: {
         canDownload = false;
         filename = '';
+        error = null;
+        warnings = [];
         if ($gcodeStore && $pressureAdvanceStore){
             const requiredSettings = $gcodeStore.requiredSettings;
             if (requiredSettings && $gcodeStore?.hasErrors == false) {
@@ -34,7 +38,12 @@
                 try {
                     const slicerSettings = requiredSettings.settings;
                     $testPatternConfigStore = new TestPatternConfiguration($gcodeStore, requiredSettings, $pressureAdvanceStore);
-                    canDownload = true;
+                    warnings = $testPatternConfigStore.warnings;
+                    if ($testPatternConfigStore.errors.length > 0) {
+                        error = $testPatternConfigStore.errors.join('<br/>');
+                    } else {
+                        canDownload = true;
+                    }
                     const printerModel = slicerSettings.printer_model.displayValue;
                     const filamentPreset = slicerSettings.filament_settings_id.displayValue;
                     filename = `PA-Test_${printerModel}_${filamentPreset}_PA_${$pressureAdvanceStore.start}-to-${$pressureAdvanceStore.end}.gcode`;
@@ -109,5 +118,8 @@
 </table>
 {/if}
 
+{#each warnings as warning}
+    <Admonition type="warning" message={warning}/>
+{/each}
 <Admonition type="error" message={error}/>
 <button type="button" disabled={!canDownload} on:click={downloadGcode}>💾 Download</button> {filename}
