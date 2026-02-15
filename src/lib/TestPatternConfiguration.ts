@@ -253,7 +253,7 @@ export class TestPatternConfiguration {
         this.filament_diameter = simpleExplainedValue('Filament Diameter', diameter);
 
         // filament temperature
-        this.filament_temperature = maxExplainedValue('Filament Temperature', [settings.temperature, settings.first_layer_temperature]);
+        this.filament_temperature = simpleExplainedValue('Filament Temperature', settings.temperature);
 
         this.num_tools = simpleExplainedValue('Number of Tools', settings.num_tools);
         this.toolIndex = gcodeStore.toolIndex;
