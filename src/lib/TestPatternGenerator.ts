@@ -80,7 +80,7 @@ export function validatePrintArea(calibrationParams: TestPatternConfiguration): 
     return printArea;
 }
 
-export function generateTestPattern(calibrationParams: TestPatternConfiguration): string {
+export function generateTestPattern(calibrationParams: TestPatternConfiguration, printNumbers: boolean = true): string {
     // get the values from the HTML elements
     var PRINTER: string = calibrationParams.printer.value,
         FILAMENT: string = calibrationParams.filament.value,
@@ -281,24 +281,26 @@ export function generateTestPattern(calibrationParams: TestPatternConfiguration)
                 zHop('+', basicSettings);
 
     // print K values beside the test lines
-    var numStartX = CENTER_X + (0.5 * LENGTH_FAST) + LENGTH_SLOW  - 2,
-        numStartY = PAT_START_Y - 2,
-        stepping = 0;
+    if (printNumbers) {
+        var numStartX = CENTER_X + (0.5 * LENGTH_FAST) + LENGTH_SLOW  - 2,
+            numStartY = PAT_START_Y - 2,
+            stepping = 0;
 
-    k_script += ';\n' +
-                '; print K-value next to lines\n' +
-                ';\n';
+        k_script += ';\n' +
+                    '; print K-value next to lines\n' +
+                    ';\n';
 
-    for (var stepping = 0; stepping < ADVANCE_LINES.length; stepping++) {
-        var paValue = ADVANCE_LINES[stepping];
-        // only print glyphs on every other line
-        if (stepping % 2 === 0) {
-            k_script += moveTo(numStartX, numStartY + (stepping * LINE_SPACING), basicSettings) +
-                        zHop('-', basicSettings) +
-                        doEfeed('+', basicSettings) +
-                        createGlyphs(numStartX, numStartY + (stepping * LINE_SPACING), basicSettings, roundDecimal(paValue, 3)) +
-                        doEfeed('-', basicSettings) +
-                        zHop('+', basicSettings);
+        for (var stepping = 0; stepping < ADVANCE_LINES.length; stepping++) {
+            var paValue = ADVANCE_LINES[stepping];
+            // only print glyphs on every other line
+            if (stepping % 2 === 0) {
+                k_script += moveTo(numStartX, numStartY + (stepping * LINE_SPACING), basicSettings) +
+                            zHop('-', basicSettings) +
+                            doEfeed('+', basicSettings) +
+                            createGlyphs(numStartX, numStartY + (stepping * LINE_SPACING), basicSettings, roundDecimal(paValue, 3)) +
+                            doEfeed('-', basicSettings) +
+                            zHop('+', basicSettings);
+            }
         }
     }
 

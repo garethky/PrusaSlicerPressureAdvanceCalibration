@@ -3,6 +3,8 @@
     import { NumericField } from './NumericField.js';
     import { pressureAdvanceStore } from './PressureAdvanceStore';
   import Admonition from './Admonition.svelte';
+  import TestPatternDiagram from './TestPatternDiagram.svelte';
+  import { printNumbersStore } from './PrintNumbersStore';
 
     let start = new NumericField(0.025, 0, 999, 3);
     let end = new NumericField(0.1, 0, 999, 3);
@@ -31,6 +33,10 @@
             <fieldset>
                 <NumberInputBox size={5} name="start" label="Test from:" field={start}/>
                 <NumberInputBox size={5} name="end" label="To:" field={end}/>
+                <label>
+                    <input type="checkbox" bind:checked={$printNumbersStore} />
+                    Print PA value numbers on the bed
+                </label>
             </fieldset>
         </form>
     </div>
@@ -38,11 +44,14 @@
         {#if $start.isValid && $end.isValid && isFormValid }
             <span>Test from <code>{$paSettings.start}</code> to <code>{$paSettings.end}</code> in steps of <code>{$paSettings.step}</code>.</span>
             <br/>
+            <!--
             <span>Prints <code>{$paSettings.lines.length}</code> test lines:</span>
             {#each $paSettings.lines as $value, i}
                 {#if i > 0},{/if}
                 <code>{$value}</code>
             {/each}
+            -->
+            <TestPatternDiagram />
         {:else}
             <Admonition type="error" message="Check from and to values"></Admonition>
         {/if}

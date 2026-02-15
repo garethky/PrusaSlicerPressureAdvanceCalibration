@@ -6,6 +6,7 @@
     import { generateTestPattern } from "./TestPatternGenerator";
     import FileSaver from "file-saver";
     import TestPatternSettingExplainer from "./TestPatternSettingExplainer.svelte";
+    import { printNumbersStore } from "./PrintNumbersStore";
 
     let canDownload: boolean = false;
     let error: string | null = null;
@@ -18,7 +19,7 @@
         }
         let file: Array<string> = [];
         file.push(...$testPatternConfigStore.startLines);
-        file.push(generateTestPattern($testPatternConfigStore));
+        file.push(generateTestPattern($testPatternConfigStore, $printNumbersStore));
         file.push(...$testPatternConfigStore.endLines);
         let blob = new Blob([file.join('\n')], {type: 'text/plain'});
         FileSaver(blob, filename);
@@ -114,7 +115,6 @@
         <TestPatternSettingExplainer setting={$testPatternConfigStore.deretract_speed} />
         <TestPatternSettingExplainer setting={$testPatternConfigStore.zHopHeight} />
     </tbody>
-    
 </table>
 {/if}
 
@@ -122,4 +122,5 @@
     <Admonition type="warning" message={warning}/>
 {/each}
 <Admonition type="error" message={error}/>
+
 <button type="button" disabled={!canDownload} on:click={downloadGcode}>💾 Download</button> {filename}
