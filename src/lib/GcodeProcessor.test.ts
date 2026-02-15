@@ -122,6 +122,45 @@ describe('multi-extruder nozzle selection', () => {
     });
 });
 
+describe('findEndGcode', () => {
+    it('finds end gcode when "; Filament-specific end gcode" is followed by ";END gcode for filament"', () => {
+        const gcode = [
+            'G28 X Y',
+            'M104 S0',
+            '; Filament-specific end gcode',
+            ';END gcode for filament',
+        ].join('\n');
+        const processor = new GcodeProcessor(gcode, 'test.gcode');
+        expect(processor.endLines).toEqual([
+            '; Filament-specific end gcode',
+            ';END gcode for filament',
+        ]);
+    });
+
+    it('finds end gcode when "; Filament-specific end gcode" is the last line', () => {
+        const gcode = [
+            'G28 X Y',
+            'M104 S0',
+            '; Filament-specific end gcode',
+        ].join('\n');
+        const processor = new GcodeProcessor(gcode, 'test.gcode');
+        expect(processor.endLines).toEqual([
+            '; Filament-specific end gcode',
+        ]);
+    });
+
+    it('reports an error when "; Filament-specific end gcode" is missing', () => {
+        const gcode = [
+            'G28 X Y',
+            'M104 S0',
+            ';END gcode for filament',
+        ].join('\n');
+        const processor = new GcodeProcessor(gcode, 'test.gcode');
+        expect(processor.endLines).toEqual([]);
+        expect(processor.errors.length).toBeGreaterThan(0);
+    });
+});
+
 describe.each([
     ["G1 X200", 0],
     ["T0", 0],
