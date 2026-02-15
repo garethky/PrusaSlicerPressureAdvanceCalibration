@@ -305,6 +305,47 @@ export class RequiredSlicerSettings {
 }
 
 /**
+ * Class responsible for reading a GCode File into a string.
+ * Supports both plain text (.gcode) and binary (.bgcode) files.
+ */
+export class GcodeFileReader {
+    fileName: string = '';
+    gcode: string = '';
+
+    constructor(file: File, onComplete: (reader: GcodeFileReader) => void) {
+        this.fileName = file.name;
+        const fileExtension = this.#extractExtension();
+        let self = this;
+
+        if (fileExtension === '.bgcode') {
+            file.arrayBuffer().then((data) => { 
+                self.gcode = Module.bgcode2ascii_and_verify(data);
+                onComplete(self);
+            });
+        } else {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                if (event && event.target && event.target.result) {
+                    let blob = event.target.result;
+                    if (blob instanceof ArrayBuffer) {
+                        self.gcode = new TextDecoder().decode(blob);
+                    } else {
+                        self.gcode = blob;
+                    }
+                    onComplete(self);
+                }
+            };
+            reader.readAsText(file);
+        }
+    }
+
+    #extractExtension(): string {
+        let dotIndex = this.fileName.lastIndexOf('.');
+        return this.fileName.substring(dotIndex);
+    }
+}
+
+/**
  * Class responsible for:
  *  - splitting the GCode file into lines
  *  - identifying all of the settings in the settings block
@@ -316,55 +357,24 @@ export class GcodeProcessor {
     allLines: Array<string> = [];
     startLines: Array<string> = [];
     endLines: Array<string> = [];
-    toolNumber: number = 1;
+    toolIndex: number = 1;
     fileName: string = '';
-    fileExtension: string = '';
     rawSettings: Map<string, string> = new Map();
     requiredSettings: RequiredSlicerSettings | null = null;
 
     errors: Array<string> = [];
 
-    constructor(file: File, onComplete: () => void) {
-        this.fileName = file.name;
-        this.fileExtension = this.#extractExtension();
-        const reader = new FileReader();
-        let self = this;
-
-        if (this.fileExtension === '.bgcode') {
-            file.arrayBuffer().then((data) => { 
-                const gcodeString = Module.bgcode2ascii_and_verify(data);
-                self.#processContents(gcodeString);
-                onComplete();
-            });
-        } else {
-        reader.onload = function(event) {
-                if (event && event.target && event.target.result) {
-                    let blob = event.target.result;
-                    let gcodeString = '';
-                    if (blob instanceof ArrayBuffer) {
-                        gcodeString = new TextDecoder().decode(blob);
-                    } else {
-                        gcodeString = blob;
-                    }
-                    self.#processContents(gcodeString);
-                    onComplete();
-                }
-            };
-            reader.readAsText(file);
-        }
-    }
-
-    #extractExtension(): string {
-        let dotIndex = this.fileName.lastIndexOf('.');
-        return this.fileName.substring(dotIndex);
+    constructor(gcode: string, fileName: string) {
+        this.fileName = fileName;
+        this.#processContents(gcode);
     }
 
     #processContents(gcode: string) {
         this.allLines = gcode.split(/\r?\n/);
         this.allLines = this.#stripTypeCustom();
         this.rawSettings = this.#extractPrusaSlicerSettings();
-        this.toolNumber = this.#findToolNumber();
-        this.requiredSettings = new RequiredSlicerSettings(this.rawSettings, this.toolNumber);
+        this.toolIndex = this.#findToolIndex();
+        this.requiredSettings = new RequiredSlicerSettings(this.rawSettings, this.toolIndex);
         this.startLines = this.#findStartGcode();
         this.endLines = this.#findEndGcode();
     }
@@ -402,7 +412,7 @@ export class GcodeProcessor {
     }
     
     #findEndGcode(): Array<string>  {
-        for (var i = this.allLines.length - 1; i > 0; i--) {
+        for (var i = this.allLines.length - 1; i >= 0; i--) {
             const line = this.allLines[i];
             if (line === "; Filament-specific end gcode") {
                 return this.allLines.slice(i);
@@ -412,16 +422,16 @@ export class GcodeProcessor {
         return [];
     }
 
-    #findToolNumber(): number {
+    #findToolIndex(): number {
         const tool_pattern = new RegExp(/^\s*T(\d+)(?:\s|$)/);
-        for (var i = this.allLines.length - 1; i > 0; i--) {
+        for (var i = this.allLines.length - 1; i >= 0; i--) {
             const line = this.allLines[i];
             const match = line.match(tool_pattern)
             if (match !== null && match?.length == 2) {
                 return parseInt(match[1])
             }
         }
-        return 1;
+        return 0;
     }
 
     get hasErrors(): boolean {
@@ -435,13 +445,11 @@ import type { TestPatternConfiguration } from "./TestPatternConfiguration";
 function createGCodeProcessorStore() {
     const { subscribe, set, update } = writable<GcodeProcessor | null>(null);
 
-    // called when the file has been parsed, this triggers a notification on the store
-    function onComplete() {
-        update((val) => val);
-    }
-
     function parseFile(file: File) {
-        set(new GcodeProcessor(file, onComplete));
+        new GcodeFileReader(file, (reader) => {
+            set(new GcodeProcessor(reader.gcode, reader.fileName));
+            update((val) => val);
+        });
     }
 
     return {

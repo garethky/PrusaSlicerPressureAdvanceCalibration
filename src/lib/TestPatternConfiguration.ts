@@ -249,7 +249,7 @@ export class TestPatternConfiguration {
         this.filament_temperature = maxExplainedValue('Filament Temperature', [settings.temperature, settings.first_layer_temperature]);
 
         this.num_tools = simpleExplainedValue('Number of Tools', settings.num_tools);
-        this.toolNumber = gcodeStore.toolNumber;
+        this.toolNumber = gcodeStore.toolIndex;
         this.tool_number = new ExplainedValue('Selected Tool', this.toolNumber, `${this.toolNumber}`, 'Selected tool from GCode');
 
         // Nozzle Diameter

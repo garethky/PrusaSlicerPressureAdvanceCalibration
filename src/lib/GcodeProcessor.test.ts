@@ -121,3 +121,17 @@ describe('multi-extruder nozzle selection', () => {
         expect(requiredSettings.settings.num_tools.value).toBe(2);
     });
 });
+
+describe.each([
+    ["G1 X200", 0],
+    ["T0", 0],
+    ["T2", 2],
+    ["T2\nT1\n", 1],
+    ]
+)
+    ('tool change parsing', (test_gcode, tool_number) => {
+    it(`parse tool change from gcode: "${test_gcode}" -> ${tool_number}`, () => {
+        const processor = new GcodeProcessor(test_gcode as string, 'test.gcode');
+        expect(processor.toolIndex).toBe(tool_number);
+    });
+});
