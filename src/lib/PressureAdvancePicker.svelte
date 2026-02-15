@@ -8,7 +8,7 @@
 
     let start = new NumericField(0.025, 0, 999, 3);
     let end = new NumericField(0.1, 0, 999, 3);
-    let isFormValid = false;
+    let isFormValid: boolean = false;
     
     const paSettings = pressureAdvanceStore;
 

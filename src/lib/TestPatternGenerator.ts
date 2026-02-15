@@ -216,6 +216,8 @@ export function generateTestPattern(calibrationParams: TestPatternConfiguration,
                    `;\n` +
                    `; -------------------------------------------------\n\n`;
     // reset before layer
+    k_script += `G90 ; All moves are absolute\n`
+    k_script += `M83 ; Extrusion Moves are relative\n`
     k_script += `G92 E0.0 ; Reset extruder distance\n`;
     k_script += `M106 S${Math.round(FAN_SPEED * 2.55)} ; Start print fan\n`;
 
@@ -307,6 +309,7 @@ export function generateTestPattern(calibrationParams: TestPatternConfiguration,
         }
     }
 
+    k_script += `G92 E0.0 ; Reset extruder distance\n`;
     k_script += setProgress(100);
 
   return k_script;
