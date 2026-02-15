@@ -39,6 +39,11 @@ type BedShape = {
     y: number,
 }
 
+export interface NumberConstraints {
+    min?: number;
+    max?: number;
+}
+
 export function validateNumberRaw(value: number, errors: Array<string>): void {
     if ((isNaN(value) || !isFinite(value))) {
         errors.push(`Value '${value}' is not a number`);
@@ -51,12 +56,20 @@ export function _parseInt(raw: string, errors: Array<string>): number {
     return val;
 }
 
-function validateNumber(value: SettingValue<number>): void {
+function validateNumber(value: SettingValue<number>, constraints?: NumberConstraints): void {
     if (value.value === null) {
         value.errors.push(`Setting '${value.key}' (${value.raw}) is not a number`);
     }
     else if (isNaN(value.value) || !isFinite(value.value)) {
         value.errors.push(`Setting '${value.key}' (${value.raw}) is not a number`);
+    }
+    else if (constraints) {
+        if (constraints.min !== undefined && value.value < constraints.min) {
+            value.errors.push(`Setting '${value.key}' value ${value.value} is below minimum ${constraints.min}`);
+        }
+        if (constraints.max !== undefined && value.value > constraints.max) {
+            value.errors.push(`Setting '${value.key}' value ${value.value} is above maximum ${constraints.max}`);
+        }
     }
 }
 
@@ -77,12 +90,14 @@ function parseToolString(value: SettingValue<string>, toolIndex: number | null) 
     value.value = quoteStr.substring(1, quoteStr.length - 1);
 }
 
-export function parseSingleInt(value: SettingValue<number>, toolIndex: number | null): void {
-    if (value.raw === 'nil') {
-        return;
-    }
-    value.value = parseInt(value.raw, 10);
-    validateNumber(value);
+export function parseSingleInt(constraints?: NumberConstraints): ParserFunction<number> {
+    return (value: SettingValue<number>, toolIndex: number | null): void => {
+        if (value.raw === 'nil') {
+            return;
+        }
+        value.value = parseInt(value.raw, 10);
+        validateNumber(value, constraints);
+    };
 }
 
 
@@ -95,29 +110,33 @@ export function parseArrayLength(value: SettingValue<number>, toolIndex: number 
     validateNumber(value);
 }
 
-export function parseSingleFloat(value: SettingValue<number>, toolIndex: number | null): void {
-    if (value.raw === 'nil') {
-        return;
-    }
-    value.value = parseFloat(value.raw);
-    validateNumber(value);
+export function parseSingleFloat(constraints?: NumberConstraints): ParserFunction<number> {
+    return (value: SettingValue<number>, toolIndex: number | null): void => {
+        if (value.raw === 'nil') {
+            return;
+        }
+        value.value = parseFloat(value.raw);
+        validateNumber(value, constraints);
+    };
 }
 
-export function parseToolFloat(value: SettingValue<number>, toolIndex: number | null): void {
-    if (toolIndex == null) {
-        value.errors.push(`Can't unpack '${value.key}' (${value.raw}) because the selected tool number is missing`);
-        return;
-    }
-    let toolValues = value.raw.split(',');
-    if (toolValues.length <= toolIndex) {
-        throw `Setting ${value.key}'s value '${value.raw}' does not have enough entries for tool #${toolIndex}`;
-    }
-    let splitValue: string = toolValues[toolIndex]
-    if (splitValue === 'nil') {
-        return;
-    }
-    value.value = parseFloat(splitValue);
-    validateNumber(value);
+export function parseToolFloat(constraints?: NumberConstraints): ParserFunction<number> {
+    return (value: SettingValue<number>, toolIndex: number | null): void => {
+        if (toolIndex == null) {
+            value.errors.push(`Can't unpack '${value.key}' (${value.raw}) because the selected tool number is missing`);
+            return;
+        }
+        let toolValues = value.raw.split(',');
+        if (toolValues.length <= toolIndex) {
+            throw `Setting ${value.key}'s value '${value.raw}' does not have enough entries for tool #${toolIndex}`;
+        }
+        let splitValue: string = toolValues[toolIndex]
+        if (splitValue === 'nil') {
+            return;
+        }
+        value.value = parseFloat(splitValue);
+        validateNumber(value, constraints);
+    };
 }
 
 function parseBedShape(value: SettingValue<BedShape>): void {
@@ -178,62 +197,62 @@ export function describeBedShape(value: SettingValue<BedShape>): void {
 }
 
 const requiredSettingsDescriptors = {
-    perimeter_extruder: new SettingsDescriptor('perimeter_extruder', parseSingleInt, describeNumber, true),
+    perimeter_extruder: new SettingsDescriptor('perimeter_extruder', parseSingleInt(), describeNumber, true),
     printer_model: new SettingsDescriptor('printer_model', parseString, describeString, true),
     gcode_flavor: new SettingsDescriptor('gcode_flavor', parseString, describeString, true),
     start_gcode: new SettingsDescriptor('start_gcode', parseString, describeString, true),
     filament_settings_id: new SettingsDescriptor('filament_settings_id', parseToolString, describeString, true),
     bed_shape: new SettingsDescriptor('bed_shape', parseBedShape, describeBedShape, true),
     num_tools: new SettingsDescriptor('nozzle_diameter', parseArrayLength, describeNumber, true),
-    nozzle_diameter: new SettingsDescriptor('nozzle_diameter', parseToolFloat, describeMm, true),
-    bed_temperature: new SettingsDescriptor('bed_temperature', parseToolFloat, describeTemp, true),
-    external_perimeter_extrusion_width: new SettingsDescriptor('external_perimeter_extrusion_width', parseSingleFloat, describeMm, true),
-    extrusion_multiplier: new SettingsDescriptor('extrusion_multiplier', parseToolFloat, describeNumber, true),
-    temperature: new SettingsDescriptor('temperature', parseToolFloat, describeTemp, true),
-    first_layer_temperature: new SettingsDescriptor('first_layer_temperature', parseToolFloat, describeTemp, true),
-    filament_diameter: new SettingsDescriptor('filament_diameter', parseToolFloat, describeMm, true),
+    nozzle_diameter: new SettingsDescriptor('nozzle_diameter', parseToolFloat({ min: 0.1 }), describeMm, true),
+    bed_temperature: new SettingsDescriptor('bed_temperature', parseToolFloat(), describeTemp, true),
+    external_perimeter_extrusion_width: new SettingsDescriptor('external_perimeter_extrusion_width', parseSingleFloat({ min: 0.1 }), describeMm, true),
+    extrusion_multiplier: new SettingsDescriptor('extrusion_multiplier', parseToolFloat(), describeNumber, true),
+    temperature: new SettingsDescriptor('temperature', parseToolFloat(), describeTemp, true),
+    first_layer_temperature: new SettingsDescriptor('first_layer_temperature', parseToolFloat(), describeTemp, true),
+    filament_diameter: new SettingsDescriptor('filament_diameter', parseToolFloat({ min: 0.1 }), describeMm, true),
 
     // accelerations
-    perimeter_acceleration: new SettingsDescriptor('perimeter_acceleration', parseSingleInt, describeMmsSquared, true),
-    external_perimeter_acceleration: new SettingsDescriptor('external_perimeter_acceleration', parseSingleInt, describeMmsSquared, true),
-    first_layer_acceleration: new SettingsDescriptor('first_layer_acceleration', parseSingleInt, describeMmsSquared, true),
-    machine_max_acceleration_extruding: new SettingsDescriptor('machine_max_acceleration_extruding', parseSingleInt, describeMmsSquared, true),
-    infill_acceleration: new SettingsDescriptor('infill_acceleration', parseSingleInt, describeMmsSquared, true),
-    solid_infill_acceleration: new SettingsDescriptor('solid_infill_acceleration', parseSingleInt, describeMmsSquared, true),
-    top_solid_infill_acceleration: new SettingsDescriptor('top_solid_infill_acceleration', parseSingleInt, describeMmsSquared, true),
-    travel_acceleration: new SettingsDescriptor('travel_acceleration', parseSingleInt, describeMmsSquared, true),
-    default_acceleration: new SettingsDescriptor('default_acceleration', parseSingleInt, describeMmsSquared, true),
+    perimeter_acceleration: new SettingsDescriptor('perimeter_acceleration', parseSingleInt(), describeMmsSquared, true),
+    external_perimeter_acceleration: new SettingsDescriptor('external_perimeter_acceleration', parseSingleInt(), describeMmsSquared, true),
+    first_layer_acceleration: new SettingsDescriptor('first_layer_acceleration', parseSingleInt(), describeMmsSquared, true),
+    machine_max_acceleration_extruding: new SettingsDescriptor('machine_max_acceleration_extruding', parseSingleInt(), describeMmsSquared, true),
+    infill_acceleration: new SettingsDescriptor('infill_acceleration', parseSingleInt(), describeMmsSquared, true),
+    solid_infill_acceleration: new SettingsDescriptor('solid_infill_acceleration', parseSingleInt(), describeMmsSquared, true),
+    top_solid_infill_acceleration: new SettingsDescriptor('top_solid_infill_acceleration', parseSingleInt(), describeMmsSquared, true),
+    travel_acceleration: new SettingsDescriptor('travel_acceleration', parseSingleInt(), describeMmsSquared, true),
+    default_acceleration: new SettingsDescriptor('default_acceleration', parseSingleInt(), describeMmsSquared, true),
 
     // speeds
-    infill_speed: new SettingsDescriptor('infill_speed', parseSingleFloat, describeMms, true),
-    solid_infill_speed: new SettingsDescriptor('solid_infill_speed', parseSingleFloat, describeMms, true),
-    top_solid_infill_speed: new SettingsDescriptor('top_solid_infill_speed', parseSingleFloat, describeMms, true),
-    perimeter_speed: new SettingsDescriptor('perimeter_speed', parseSingleInt, describeMms, true),
-    travel_speed: new SettingsDescriptor('travel_speed', parseSingleInt, describeMms, true),
+    infill_speed: new SettingsDescriptor('infill_speed', parseSingleFloat(), describeMms, true),
+    solid_infill_speed: new SettingsDescriptor('solid_infill_speed', parseSingleFloat(), describeMms, true),
+    top_solid_infill_speed: new SettingsDescriptor('top_solid_infill_speed', parseSingleFloat(), describeMms, true),
+    perimeter_speed: new SettingsDescriptor('perimeter_speed', parseSingleInt(), describeMms, true),
+    travel_speed: new SettingsDescriptor('travel_speed', parseSingleInt(), describeMms, true),
 
-    perimeter_extrusion_width: new SettingsDescriptor('perimeter_extrusion_width', parseSingleFloat, describeMm, true),
-    travel_speed_z: new SettingsDescriptor('travel_speed_z', parseSingleInt, describeMms, true),
+    perimeter_extrusion_width: new SettingsDescriptor('perimeter_extrusion_width', parseSingleFloat({ min: 0.1 }), describeMm, true),
+    travel_speed_z: new SettingsDescriptor('travel_speed_z', parseSingleInt(), describeMms, true),
 
     // retractions
-    retract_length: new SettingsDescriptor('retract_length', parseToolFloat, describeMm, true),
-    retract_restart_extra: new SettingsDescriptor('retract_restart_extra', parseToolFloat, describeMm, true),
-    retract_speed: new SettingsDescriptor('retract_speed', parseToolFloat, describeMms, true),
-    deretract_speed: new SettingsDescriptor('deretract_speed', parseToolFloat, describeMms, true),
-    retract_lift: new SettingsDescriptor('retract_lift', parseToolFloat, describeMm, true),
+    retract_length: new SettingsDescriptor('retract_length', parseToolFloat(), describeMm, true),
+    retract_restart_extra: new SettingsDescriptor('retract_restart_extra', parseToolFloat(), describeMm, true),
+    retract_speed: new SettingsDescriptor('retract_speed', parseToolFloat(), describeMms, true),
+    deretract_speed: new SettingsDescriptor('deretract_speed', parseToolFloat(), describeMms, true),
+    retract_lift: new SettingsDescriptor('retract_lift', parseToolFloat(), describeMm, true),
     // filament retraction overrides
-    filament_retract_length: new SettingsDescriptor('filament_retract_length', parseToolFloat, describeMm, false),
-    filament_retract_restart_extra: new SettingsDescriptor('retract_restart_extra', parseToolFloat, describeMm, false),
-    filament_retract_speed: new SettingsDescriptor('filament_retract_speed', parseToolFloat, describeMms, false),
-    filament_deretract_speed: new SettingsDescriptor('filament_deretract_speed', parseToolFloat, describeMms, false),
-    filament_retract_lift: new SettingsDescriptor('filament_retract_lift', parseToolFloat, describeMm, false),
+    filament_retract_length: new SettingsDescriptor('filament_retract_length', parseToolFloat(), describeMm, false),
+    filament_retract_restart_extra: new SettingsDescriptor('retract_restart_extra', parseToolFloat(), describeMm, false),
+    filament_retract_speed: new SettingsDescriptor('filament_retract_speed', parseToolFloat(), describeMms, false),
+    filament_deretract_speed: new SettingsDescriptor('filament_deretract_speed', parseToolFloat(), describeMms, false),
+    filament_retract_lift: new SettingsDescriptor('filament_retract_lift', parseToolFloat(), describeMm, false),
 
-    layer_height: new SettingsDescriptor('layer_height', parseSingleFloat, describeMm, true),
-    disable_fan_first_layers: new SettingsDescriptor('disable_fan_first_layers', parseToolFloat, describeNumber, true),
-    first_layer_speed: new SettingsDescriptor('first_layer_speed', parseSingleFloat, describeMms, true),
-    min_fan_speed: new SettingsDescriptor('min_fan_speed', parseToolFloat, describePercent, true),
+    layer_height: new SettingsDescriptor('layer_height', parseSingleFloat({ min: 0.01 }), describeMm, true),
+    disable_fan_first_layers: new SettingsDescriptor('disable_fan_first_layers', parseToolFloat(), describeNumber, true),
+    first_layer_speed: new SettingsDescriptor('first_layer_speed', parseSingleFloat(), describeMms, true),
+    min_fan_speed: new SettingsDescriptor('min_fan_speed', parseToolFloat(), describePercent, true),
 
-    max_volumetric_speed: new SettingsDescriptor('max_volumetric_speed', parseSingleFloat, describeMmCubed, true),
-    filament_max_volumetric_speed: new SettingsDescriptor('filament_max_volumetric_speed', parseToolFloat, describeMmCubed, false),
+    max_volumetric_speed: new SettingsDescriptor('max_volumetric_speed', parseSingleFloat(), describeMmCubed, true),
+    filament_max_volumetric_speed: new SettingsDescriptor('filament_max_volumetric_speed', parseToolFloat(), describeMmCubed, false),
 } as const;
 
 type RequiredSettingsDescriptorMap = typeof requiredSettingsDescriptors;

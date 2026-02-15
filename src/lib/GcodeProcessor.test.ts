@@ -4,18 +4,61 @@ import { valueFromSetting, SettingValue, parseSingleInt, parseSingleFloat, parse
 describe('nil values tests', () => {
     it('parseSingleFloat of nil is null', () => {
         let val: SettingValue<number> = new SettingValue('test_setting', 'nil');
-        parseSingleFloat(val, -1);
+        parseSingleFloat()(val, -1);
         expect(val.value).toBeNull();
     });
     it('parseSingleInt of nil is null', () => {
         let val: SettingValue<number> = new SettingValue('test_setting', 'nil');
-        parseSingleInt(val, -1);
+        parseSingleInt()(val, -1);
         expect(val.value).toBeNull();
     });
     it('parseToolFloat of nil is null', () => {
         let val: SettingValue<number> = new SettingValue('test_setting', 'nil,10');
-        parseToolFloat(val, 0);
+        parseToolFloat()(val, 0);
         expect(val.value).toBeNull();
+    });
+});
+
+describe.each([
+    // [description, raw, constraints, toolIndex, expectedValue, expectedErrors, errorSubstring]
+    ['parseSingleFloat rejects value below min',       '0',      { min: 0.1 },  null, 0,     1, 'below minimum'],
+    ['parseSingleFloat accepts value at min',          '0.1',    { min: 0.1 },  null, 0.1,   0, null],
+    ['parseSingleFloat accepts value above min',       '0.45',   { min: 0.1 },  null, 0.45,  0, null],
+    ['parseSingleFloat rejects value above max',       '100',    { max: 50 },   null, 100,   1, 'above maximum'],
+    ['parseSingleFloat with no constraints accepts 0', '0',      undefined,     null, 0,     0, null],
+] as const)('parseSingleFloat constraints: %s', (_desc, raw, constraints, toolIndex, expectedValue, expectedErrors, errorSubstring) => {
+    it(_desc, () => {
+        let val: SettingValue<number> = new SettingValue('test_setting', raw as string);
+        parseSingleFloat(constraints as any)(val, toolIndex);
+        expect(val.value).toBe(expectedValue);
+        expect(val.errors.length).toBe(expectedErrors);
+        if (errorSubstring) expect(val.errors[0]).toContain(errorSubstring);
+    });
+});
+
+describe.each([
+    ['parseSingleInt rejects value below min', '0', { min: 1 }, null, 0, 1, 'below minimum'],
+    ['parseSingleInt accepts value at min',    '1', { min: 1 }, null, 1, 0, null],
+] as const)('parseSingleInt constraints: %s', (_desc, raw, constraints, toolIndex, expectedValue, expectedErrors, errorSubstring) => {
+    it(_desc, () => {
+        let val: SettingValue<number> = new SettingValue('test_setting', raw as string);
+        parseSingleInt(constraints as any)(val, toolIndex);
+        expect(val.value).toBe(expectedValue);
+        expect(val.errors.length).toBe(expectedErrors);
+        if (errorSubstring) expect(val.errors[0]).toContain(errorSubstring);
+    });
+});
+
+describe.each([
+    ['parseToolFloat rejects value below min', '0,0.4',   { min: 0.1 }, 0, 0,    1, 'below minimum'],
+    ['parseToolFloat accepts value above min', '0.4,0.25', { min: 0.1 }, 1, 0.25, 0, null],
+] as const)('parseToolFloat constraints: %s', (_desc, raw, constraints, toolIndex, expectedValue, expectedErrors, errorSubstring) => {
+    it(_desc, () => {
+        let val: SettingValue<number> = new SettingValue('test_setting', raw as string);
+        parseToolFloat(constraints as any)(val, toolIndex as number);
+        expect(val.value).toBe(expectedValue);
+        expect(val.errors.length).toBe(expectedErrors);
+        if (errorSubstring) expect(val.errors[0]).toContain(errorSubstring);
     });
 });
 
@@ -24,7 +67,7 @@ describe('valueFromSetting tests', () => {
     it('simple setting works', () => {
         let foundSettings = new Map<string, string>();
         foundSettings.set('test_setting', '42');
-        let desc = new SettingsDescriptor('test_setting', parseSingleInt, describeMm, true);
+        let desc = new SettingsDescriptor('test_setting', parseSingleInt(), describeMm, true);
         let allErrors: Array<Array<string>> = [];
         let allSettings: Array<SettingValue<any>> = [];
         let valOut = valueFromSetting(foundSettings, desc, toolIndex, allErrors, allSettings);
@@ -35,7 +78,7 @@ describe('valueFromSetting tests', () => {
     });
     it('test missing setting', () => {
         let foundSettings = new Map<string, string>();
-        let desc = new SettingsDescriptor('test_setting', parseSingleInt, describeMm, true);
+        let desc = new SettingsDescriptor('test_setting', parseSingleInt(), describeMm, true);
         let allErrors: Array<Array<string>> = [];
         let allSettings: Array<SettingValue<any>> = [];
         let valOut = valueFromSetting(foundSettings, desc, toolIndex, allErrors, allSettings);
@@ -47,7 +90,7 @@ describe('valueFromSetting tests', () => {
     it('test nil setting', () => {
         let foundSettings = new Map<string, string>();
         foundSettings.set('test_setting', 'nil');
-        let desc = new SettingsDescriptor('test_setting', parseSingleInt, describeMm, true);
+        let desc = new SettingsDescriptor('test_setting', parseSingleInt(), describeMm, true);
         let allErrors: Array<Array<string>> = [];
         let allSettings: Array<SettingValue<any>> = [];
         let valOut = valueFromSetting(foundSettings, desc, toolIndex, allErrors, allSettings);
@@ -59,7 +102,7 @@ describe('valueFromSetting tests', () => {
     it('test nil setting not required', () => {
         let foundSettings = new Map<string, string>();
         foundSettings.set('test_setting', 'nil');
-        let desc = new SettingsDescriptor('test_setting', parseSingleInt, describeMm, false);
+        let desc = new SettingsDescriptor('test_setting', parseSingleInt(), describeMm, false);
         let allErrors: Array<Array<string>> = [];
         let allSettings: Array<SettingValue<any>> = [];
         let valOut = valueFromSetting(foundSettings, desc, toolIndex, allErrors, allSettings);
@@ -71,7 +114,7 @@ describe('valueFromSetting tests', () => {
     it('test filament setting with value', () => {
         let foundSettings = new Map<string, string>();
         foundSettings.set('test_setting', '42.42,nil');
-        let desc = new SettingsDescriptor('test_setting', parseToolFloat, describeMm, true);
+        let desc = new SettingsDescriptor('test_setting', parseToolFloat(), describeMm, true);
         let allErrors: Array<Array<string>> = [];
         let allSettings: Array<SettingValue<any>> = [];
         let valOut = valueFromSetting(foundSettings, desc, toolIndex, allErrors, allSettings);
@@ -83,7 +126,7 @@ describe('valueFromSetting tests', () => {
     it('test nil filament setting', () => {
         let foundSettings = new Map<string, string>();
         foundSettings.set('test_setting', 'nil,42');
-        let desc = new SettingsDescriptor('test_setting', parseToolFloat, describeMm, true);
+        let desc = new SettingsDescriptor('test_setting', parseToolFloat(), describeMm, true);
         let allErrors: Array<Array<string>> = [];
         let allSettings: Array<SettingValue<any>> = [];
         let valOut = valueFromSetting(foundSettings, desc, toolIndex, allErrors, allSettings);
@@ -94,7 +137,7 @@ describe('valueFromSetting tests', () => {
     it('test nil filament setting not required', () => {
         let foundSettings = new Map<string, string>();
         foundSettings.set('test_setting', 'nil,42');
-        let desc = new SettingsDescriptor('test_setting', parseToolFloat, describeMm, false);
+        let desc = new SettingsDescriptor('test_setting', parseToolFloat(), describeMm, false);
         let allErrors: Array<Array<string>> = [];
         let allSettings: Array<SettingValue<any>> = [];
         let valOut = valueFromSetting(foundSettings, desc, toolIndex, allErrors, allSettings);
