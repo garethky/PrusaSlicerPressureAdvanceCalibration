@@ -1,12 +1,24 @@
 <script lang="ts">
     import { pressureAdvanceStore } from "./PressureAdvanceStore";
+    import { testPatternConfigStore } from "./TestPatternConfiguration";
     import { getTickLength, TickLength } from "./PressureAdvanceModel";
+
+    function gcodeForValue(paValue: number): string {
+        if (!$testPatternConfigStore) return '';
+        const prefix = $testPatternConfigStore.advance_gcode_prefix.value.slicerTemplate;
+        const nozzle = $testPatternConfigStore.nozzle_diameter.value;
+        return `{if nozzle_diameter[filament_extruder_id]==${nozzle}}\n    ${prefix}${paValue} ; Set Pressure Advance to ${paValue}\n{endif}`;
+    }
+
+    function copyGcode(paValue: number) {
+        navigator.clipboard.writeText(gcodeForValue(paValue));
+    }
 </script>
 
 {#if $pressureAdvanceStore.lines.length > 0}
     {@const lines = $pressureAdvanceStore.lines}
     <div class="pattern-diagram">
-        <div class="origin-label">▲ Top of print</div>
+        <div class="origin-label">▲ Back of print</div>
         <table class="pattern-table">
             <thead>
                 <tr>
@@ -14,6 +26,7 @@
                     <th class="col-pattern">Test Line Pattern</th>
                     <th class="col-tick"></th>
                     <th class="col-pa">PA Value</th>
+                    <th class="col-copy"></th>
                 </tr>
             </thead>
             <tbody>
@@ -36,11 +49,14 @@
                             </div>
                         </td>
                         <td class="col-pa"><code>{lines[i]}</code></td>
+                        <td class="col-copy">
+                            <button class="copy-btn outline secondary" title="Copy gcode for PA {lines[i]}" disabled={!$testPatternConfigStore} on:click={() => copyGcode(lines[i])}>📋&nbsp;Copy&nbsp;PA&nbsp;Gcode</button>
+                        </td>
                     </tr>
                 {/each}
             </tbody>
         </table>
-        <div class="origin-label">▼ Bottom of print (origin)</div>
+        <div class="origin-label">▼ Front of print</div>
     </div>
 {/if}
 
@@ -82,6 +98,16 @@
         width: 6em;
         padding-left: 0.5em !important;
         font-variant-numeric: tabular-nums;
+    }
+
+    .col-copy {
+        width: 3em;
+        padding: 0 !important;
+    }
+
+    .copy-btn {
+        padding: 0.15em 0.4em;
+        /*width: auto;*/
     }
 
     .line-visual {
