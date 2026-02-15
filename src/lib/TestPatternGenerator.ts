@@ -1,5 +1,6 @@
 import type { GcodeProcessor } from './GcodeProcessor';
 import { PrintArea, type TestPatternConfiguration } from './TestPatternConfiguration';
+import { getTickLength, TickLength } from './PressureAdvanceModel';
 import Big from 'big.js';
 
 /**
@@ -47,7 +48,8 @@ type PatternSettings = {
     lengthSlow: number,
     lengthFast: number,
     advanceLines: Array<number>,
-    lineSpacing: number
+    lineSpacing: number,
+    tickLengths: Array<number>
 };
 
 const LINE_SPACING: number =  4.0;
@@ -56,7 +58,7 @@ export function validatePrintArea(calibrationParams: TestPatternConfiguration): 
     const 
         centerX = (calibrationParams.null_center ? 0 : calibrationParams.bed_x.value / 2),
         centerY = (calibrationParams.null_center ? 0 : calibrationParams.bed_y.value / 2),
-        sizeX = (2 * calibrationParams.length_slow) + calibrationParams.length_fast + 8,
+        sizeX = (2 * calibrationParams.length_slow) + calibrationParams.length_fast + TickLength.LONG + 8,
         sizeY = calibrationParams.advance_lines.value.length * LINE_SPACING + 25, // +25 with ref marking
         startX = centerX - (0.5 * calibrationParams.length_fast) - calibrationParams.length_slow - 4,
         startY = centerY - (sizeY / 2),
@@ -130,7 +132,7 @@ export function generateTestPattern(calibrationParams: TestPatternConfiguration,
     UNRETRACT_SPEED *= 60;
 
     var PRINT_SIZE_Y = (ADVANCE_LINES.length * LINE_SPACING) + 25, // +25 with ref marking
-        PRINT_SIZE_X = (2 * LENGTH_SLOW) + LENGTH_FAST  + 8,  // this cant be wide enough to account for the frame + numbers
+        PRINT_SIZE_X = (2 * LENGTH_SLOW) + LENGTH_FAST + TickLength.LONG + 8,  // this cant be wide enough to account for the frame + numbers
         CENTER_X = (NULL_CENTER ? 0 : BED_X / 2),
         CENTER_Y = (NULL_CENTER ? 0 : BED_Y / 2),
         PAT_START_X = CENTER_X - (0.5 * LENGTH_FAST) - LENGTH_SLOW - 4,
@@ -168,7 +170,8 @@ export function generateTestPattern(calibrationParams: TestPatternConfiguration,
         lengthSlow : LENGTH_SLOW,
         lengthFast: LENGTH_FAST,
         advanceLines: ADVANCE_LINES,
-        lineSpacing: LINE_SPACING
+        lineSpacing: LINE_SPACING,
+        tickLengths: ADVANCE_LINES.map((_, i) => getTickLength(i))
     };
 
     // Start G-code for pattern
@@ -282,7 +285,7 @@ export function generateTestPattern(calibrationParams: TestPatternConfiguration,
 
     // print K values beside the test lines
     if (printNumbers) {
-        var numStartX = CENTER_X + (0.5 * LENGTH_FAST) + LENGTH_SLOW  - 2,
+        var numStartX = CENTER_X + (0.5 * LENGTH_FAST) + LENGTH_SLOW + TickLength.LONG - 2,
             numStartY = PAT_START_Y - 2,
             stepping = 0;
 
@@ -407,7 +410,7 @@ function createStdPattern(startX: number, startY: number, basicSettings: BasicSe
                     setAcceleration('test', basicSettings) +
                     createLine(startX + patSettings.lengthSlow, startY + lineOffset, patSettings.lengthSlow, basicSettings, {'speed': basicSettings.slowSpeed}) +
                     createLine(startX + patSettings.lengthSlow + patSettings.lengthFast, startY + lineOffset, patSettings.lengthFast, basicSettings, {'speed': basicSettings.fastSpeed}) +
-                    createLine(startX + (2 * patSettings.lengthSlow) + patSettings.lengthFast, startY + lineOffset, patSettings.lengthSlow, basicSettings, {'speed': basicSettings.slowSpeed}) +
+                    createLine(startX + (2 * patSettings.lengthSlow) + patSettings.lengthFast + patSettings.tickLengths[i], startY + lineOffset, patSettings.lengthSlow + patSettings.tickLengths[i], basicSettings, {'speed': basicSettings.slowSpeed}) +
                     setAcceleration('print', basicSettings) +
                     doEfeed('-', basicSettings);
                     gcode += (i !== patSettings.advanceLines.length - 1 ? moveTo(startX, startY + lineOffset + patSettings.lineSpacing, basicSettings) : '');

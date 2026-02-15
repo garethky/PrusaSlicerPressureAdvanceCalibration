@@ -1,5 +1,17 @@
 import Big from "big.js";
 
+export const TickLength = {
+    SHORT: 4,
+    MEDIUM: 8,
+    LONG: 12,
+} as const;
+
+const TICK_PATTERN = [TickLength.LONG, TickLength.SHORT, TickLength.SHORT, TickLength.MEDIUM, TickLength.SHORT, TickLength.SHORT];
+
+export function getTickLength(lineIndex: number): number {
+    return TICK_PATTERN[lineIndex % TICK_PATTERN.length];
+}
+
 // Pure JavaScript business object, encapsulates logic and state we don't want in the UI
 export class PressureAdvanceModel {
     #start: Big = new Big(0.0);
@@ -69,5 +81,9 @@ export class PressureAdvanceModel {
 
     get lines() {
         return this.#lines;
+    }
+
+    get tickLengths(): Array<number> {
+        return this.#lines.map((_, index) => getTickLength(index));
     }
 }
