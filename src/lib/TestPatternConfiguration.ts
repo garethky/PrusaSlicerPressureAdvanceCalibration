@@ -234,7 +234,7 @@ export class TestPatternConfiguration {
     null_center: boolean = false;
     startLines: string[];
     endLines: string[];
-    toolNumber: number;
+    toolIndex: number;
     
 
     constructor(gcodeStore: GcodeProcessor, slicerSettings: RequiredSlicerSettings, paModel: PressureAdvanceModel) {
@@ -249,8 +249,8 @@ export class TestPatternConfiguration {
         this.filament_temperature = maxExplainedValue('Filament Temperature', [settings.temperature, settings.first_layer_temperature]);
 
         this.num_tools = simpleExplainedValue('Number of Tools', settings.num_tools);
-        this.toolNumber = gcodeStore.toolIndex;
-        this.tool_number = new ExplainedValue('Selected Tool', this.toolNumber, `${this.toolNumber}`, 'Selected tool from GCode');
+        this.toolIndex = gcodeStore.toolIndex;
+        this.tool_number = new ExplainedValue('Selected Tool', this.toolIndex + 1, `${this.toolIndex + 1}`, 'Selected tool from GCode');
 
         // Nozzle Diameter
         this.nozzle_diameter = simpleExplainedValue('Nozzle Diameter', settings.nozzle_diameter);
@@ -299,8 +299,7 @@ export class TestPatternConfiguration {
         const fanSpeed = fanOffLayer > 0 ? 0 : minFanSpeed;
         this.fan_speed = new ExplainedValue("Part Cooling Fan Speed", fanSpeed, `${fanSpeed}%`, new ExplanationFanSpeed(fanSpeed, settings.min_fan_speed, settings.disable_fan_first_layers));
 
-        const toolIndex = this.toolNumber - 1;
-        this.advance_gcode_prefix = selectAdvanceGCodePrefix(slicerSettings, toolIndex);
+        this.advance_gcode_prefix = selectAdvanceGCodePrefix(slicerSettings, this.toolIndex);
         this.advance_step = paModel.step;
         let paModelString = `${paModel.lines.length} lines: ${paModel.lines[0]} ... ${paModel.lines[paModel.lines.length - 1]} in ${paModel.step} steps`;
         this.advance_lines = new ExplainedValue('Pressure Advance Test Values', paModel.lines, paModelString, new ExplanationArray(paModel.lines));

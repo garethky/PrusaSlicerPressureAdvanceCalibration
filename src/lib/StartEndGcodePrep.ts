@@ -106,7 +106,7 @@ export function prepareStartEndGcode(settings: RequiredSlicerSettings, patternCo
     }
 
     // Prusa Marlin & RRF
-    let toolIndex: number = patternConfig.toolNumber;
+    let toolIndex: number = patternConfig.toolIndex;
     let firstLayerTemp = slicerSettings.first_layer_temperature.toValue();
     let filamentTemp = patternConfig.filament_temperature.value;
 

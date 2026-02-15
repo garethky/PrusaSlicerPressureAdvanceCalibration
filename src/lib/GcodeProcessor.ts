@@ -18,7 +18,7 @@ export class SettingValue<T> {
     }
 }
 
-type ParserFunction<T> = (value: SettingValue<T>, toolNumber: number | null) => void;
+type ParserFunction<T> = (value: SettingValue<T>, toolIndex: number | null) => void;
 type DescriberFunction<T> = (value: SettingValue<T>) => void;
 export class SettingsDescriptor<T> {
     key: string;
@@ -60,24 +60,24 @@ function validateNumber(value: SettingValue<number>): void {
     }
 }
 
-function parseString(value: SettingValue<string>, toolNumber: number | null): void {
+function parseString(value: SettingValue<string>, toolIndex: number | null): void {
     value.value = '' + value.raw;
 }
 
-function parseToolString(value: SettingValue<string>, toolNumber: number | null) {
-    if (toolNumber == null) {
+function parseToolString(value: SettingValue<string>, toolIndex: number | null) {
+    if (toolIndex == null) {
         value.errors.push(`Can't unpack '${value.key}' (${value.raw}) because the selected tool number is missing`);
         return;
     }
     let toolValues = value.raw.split(';');
-    if (toolValues.length < toolNumber) {
-        throw `value does not have enough entries for tool #${toolNumber}`;
+    if (toolValues.length <= toolIndex) {
+        throw `value does not have enough entries for tool #${toolIndex}`;
     }
-    const quoteStr = toolValues[toolNumber - 1];
+    const quoteStr = toolValues[toolIndex];
     value.value = quoteStr.substring(1, quoteStr.length - 1);
 }
 
-export function parseSingleInt(value: SettingValue<number>, toolNumber: number | null): void {
+export function parseSingleInt(value: SettingValue<number>, toolIndex: number | null): void {
     if (value.raw === 'nil') {
         return;
     }
@@ -86,7 +86,7 @@ export function parseSingleInt(value: SettingValue<number>, toolNumber: number |
 }
 
 
-export function parseArrayLength(value: SettingValue<number>, toolNumber: number | null): void {
+export function parseArrayLength(value: SettingValue<number>, toolIndex: number | null): void {
     if (value.raw === 'nil') {
         return;
     }
@@ -95,7 +95,7 @@ export function parseArrayLength(value: SettingValue<number>, toolNumber: number
     validateNumber(value);
 }
 
-export function parseSingleFloat(value: SettingValue<number>, toolNumber: number | null): void {
+export function parseSingleFloat(value: SettingValue<number>, toolIndex: number | null): void {
     if (value.raw === 'nil') {
         return;
     }
@@ -103,16 +103,16 @@ export function parseSingleFloat(value: SettingValue<number>, toolNumber: number
     validateNumber(value);
 }
 
-export function parseToolFloat(value: SettingValue<number>, toolNumber: number | null): void {
-    if (toolNumber == null) {
+export function parseToolFloat(value: SettingValue<number>, toolIndex: number | null): void {
+    if (toolIndex == null) {
         value.errors.push(`Can't unpack '${value.key}' (${value.raw}) because the selected tool number is missing`);
         return;
     }
     let toolValues = value.raw.split(',');
-    if (toolValues.length < toolNumber) {
-        throw `Setting ${value.key}'s value '${value.raw}' does not have enough entries for tool #${toolNumber}`;
+    if (toolValues.length <= toolIndex) {
+        throw `Setting ${value.key}'s value '${value.raw}' does not have enough entries for tool #${toolIndex}`;
     }
-    let splitValue: string = toolValues[toolNumber - 1]
+    let splitValue: string = toolValues[toolIndex]
     if (splitValue === 'nil') {
         return;
     }
@@ -246,7 +246,7 @@ export type RequiredSettingsValues = {
 
 export function valueFromSetting<T>(foundSettings: Map<string, string>,
                                     descriptor: SettingsDescriptor<T>,
-                                    toolNumber: number | null,
+                                    toolIndex: number | null,
                                     allErrors: Array<Array<string>> = [],
                                     allSettings: Array<SettingValue<any>> = []): SettingValue<T> {
     let val: SettingValue<T> = new SettingValue<T>(descriptor.key, '');
@@ -254,7 +254,7 @@ export function valueFromSetting<T>(foundSettings: Map<string, string>,
 
     if (foundSettings.has(descriptor.key)) {
         val = new SettingValue<T>(descriptor.key, '' + foundSettings.get(descriptor.key));
-        descriptor.parser(val, toolNumber);
+        descriptor.parser(val, toolIndex);
         if (val.value !== null) {
             descriptor.describer(val);
         }
@@ -275,15 +275,15 @@ export class RequiredSlicerSettings {
     #allErrors: Array<Array<string>> = [];
     allSettings: Array<SettingValue<any>> = []
     settings: RequiredSettingsValues;
-    toolNumber: number | null;
+    toolIndex: number | null;
 
-    constructor(foundSettings: Map<string, string>, toolNumber: number | null = null) {
-        this.toolNumber = toolNumber;
+    constructor(foundSettings: Map<string, string>, toolIndex: number | null = null) {
+        this.toolIndex = toolIndex;
         const resolvedSettings = {} as RequiredSettingsValues;
         const keys = Object.keys(requiredSettingsDescriptors) as RequiredSettingKey[];
         const resolveSetting = <K extends RequiredSettingKey>(key: K): RequiredSettingsValues[K] => {
             const descriptor = requiredSettingsDescriptors[key] as SettingsDescriptor<DescriptorValue<RequiredSettingsDescriptorMap[K]>>;
-            return valueFromSetting(foundSettings, descriptor, this.toolNumber, this.#allErrors, this.allSettings) as RequiredSettingsValues[K];
+            return valueFromSetting(foundSettings, descriptor, this.toolIndex, this.#allErrors, this.allSettings) as RequiredSettingsValues[K];
         };
         const assignSetting = <K extends RequiredSettingKey>(key: K, value: RequiredSettingsValues[K]) => {
             resolvedSettings[key] = value;
