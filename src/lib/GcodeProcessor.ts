@@ -459,12 +459,13 @@ export class GcodeProcessor {
 }
 
 import { writable } from "svelte/store";
-import type { TestPatternConfiguration } from "./TestPatternConfiguration";
+import { testPatternConfigStore } from "./TestPatternConfiguration";
 
 function createGCodeProcessorStore() {
     const { subscribe, set, update } = writable<GcodeProcessor | null>(null);
 
     function parseFile(file: File) {
+        testPatternConfigStore.set(null);
         new GcodeFileReader(file, (reader) => {
             set(new GcodeProcessor(reader.gcode, reader.fileName));
             update((val) => val);

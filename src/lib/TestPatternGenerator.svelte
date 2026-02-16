@@ -32,6 +32,8 @@
         filename = '';
         error = null;
         warnings = [];
+        settings = null;
+        $testPatternConfigStore = null;
         if ($gcodeStore && $pressureAdvanceStore){
             const requiredSettings = $gcodeStore.requiredSettings;
             if (requiredSettings && $gcodeStore?.hasErrors == false) {
