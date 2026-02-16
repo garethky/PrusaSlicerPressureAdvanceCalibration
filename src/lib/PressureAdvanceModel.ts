@@ -21,20 +21,24 @@ export class PressureAdvanceModel {
 
     #minLines = 10;
     #maxLines = 30;
-    // TODO: with another loop we could start with 3 increments and just multiply them by 10 continuously
     #increments = [100, 50, 25, 10, 5, 2.5, 1, 0.5, 0.25, 0.1, 0.05, 0.025, 0.01, 0.005, 0.002, 0.001];
-
     
     constructor () {
     }
 
     #validate(start: number, end: number) {
-        if (isNaN(start) || !isFinite(start) 
-            || isNaN(end) || !isFinite(end) 
-            || (start + 0.01) >= end) {
-            throw "start/end values are not number";
+        if (isNaN(start) || !isFinite(start)) {
+            throw "Start value is not a number";
         }
-        return true;
+        if (isNaN(end) || !isFinite(end)) {
+            throw "End value is not a number";
+        }
+        if (end < start) {
+            throw "End value is less than Start value";
+        }
+        if ((start + 0.01) > end) {
+            throw "Minimum test range is 0.01";
+        }
     }
 
     #calculateLines(start: number, end: number) {
@@ -51,19 +55,16 @@ export class PressureAdvanceModel {
                     let lineValue: Big = new Big(j).mul(inc).add(this.#start)
                     this.#lines.push(parseFloat(lineValue.toFixed(3)));
                 }
-                break;  // break outer loop
+                return;  // a solution has been found
             }
         }
+        throw "No solution found for input range";
     }
 
     // mutating function that sets values and re-calculates internal state
     setRange(start: number, end: number) {
-        if (this.#validate(start, end)) {
-            this.#calculateLines(start, end);
-            return true;
-        } else {
-            return false;
-        }
+        this.#validate(start, end)
+        this.#calculateLines(start, end);
     }
 
     // non-mutating getters, calling these is not a state change

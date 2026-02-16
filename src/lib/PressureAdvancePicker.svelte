@@ -28,33 +28,20 @@
 <h4>Pressure Advance Test Range</h4>
 
 <div class="row">
-    <div class="col-lg-1 col-md-2 col-sm-3 col-xs-3">
+    <div class="col-lg-2 col-md-2 col-sm-3 col-xs-3">
         <form>
             <fieldset>
                 <NumberInputBox size={5} name="start" label="Test from:" field={start}/>
                 <NumberInputBox size={5} name="end" label="To:" field={end}/>
-                <label>
-                    <input type="checkbox" bind:checked={$printNumbersStore} />
-                    Print PA value numbers on the bed
-                </label>
+                <input type="checkbox" bind:checked={$printNumbersStore} /> Print PA numbers
             </fieldset>
         </form>
     </div>
-    <div class="col-lg-11 col-md-10 col-sm-9 col-xs-9">
+    <div class="col-lg-10 col-md-10 col-sm-9 col-xs-9">
         {#if $start.isValid && $end.isValid && isFormValid }
-            <span>Test from <code>{$paSettings.start}</code> to <code>{$paSettings.end}</code> in steps of <code>{$paSettings.step}</code>.</span>
-            <br/>
-            <!--
-            <span>Prints <code>{$paSettings.lines.length}</code> test lines:</span>
-            {#each $paSettings.lines as $value, i}
-                {#if i > 0},{/if}
-                <code>{$value}</code>
-            {/each}
-            -->
             <TestPatternDiagram />
         {:else}
-            <Admonition type="error" message="Check from and to values"></Admonition>
+            <Admonition type="error" message="Check from and to values for errors"></Admonition>
         {/if}
     </div>
 </div>
-

@@ -18,6 +18,8 @@
 {#if $pressureAdvanceStore.lines.length > 0}
     {@const lines = $pressureAdvanceStore.lines}
     <div class="pattern-diagram">
+        <div><strong>Test Pattern Diargram</strong></div>
+        <span>Test from <code>{$pressureAdvanceStore.start}</code> to <code>{$pressureAdvanceStore.end}</code> in steps of <code>{$pressureAdvanceStore.step}</code></span>
         <div class="origin-label">▲ Back of print</div>
         <table class="pattern-table">
             <thead>
