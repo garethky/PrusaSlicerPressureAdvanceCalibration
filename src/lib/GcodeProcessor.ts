@@ -241,7 +241,7 @@ const requiredSettingsDescriptors = {
     retract_lift: new SettingsDescriptor('retract_lift', parseToolFloat(), describeMm, true),
     // filament retraction overrides
     filament_retract_length: new SettingsDescriptor('filament_retract_length', parseToolFloat(), describeMm, false),
-    filament_retract_restart_extra: new SettingsDescriptor('retract_restart_extra', parseToolFloat(), describeMm, false),
+    filament_retract_restart_extra: new SettingsDescriptor('filament_retract_restart_extra', parseToolFloat(), describeMm, false),
     filament_retract_speed: new SettingsDescriptor('filament_retract_speed', parseToolFloat(), describeMms, false),
     filament_deretract_speed: new SettingsDescriptor('filament_deretract_speed', parseToolFloat(), describeMms, false),
     filament_retract_lift: new SettingsDescriptor('filament_retract_lift', parseToolFloat(), describeMm, false),

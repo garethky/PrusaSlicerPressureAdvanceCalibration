@@ -136,6 +136,16 @@ export function selectPressureAdvanceGCodePrefix(flavour: string, printerModel: 
     throw `Sorry, your firmware type is not supported yet`;
 }
 
+// Precision rounding to the nth decimal place
+export function roundTo(value: number, decimals:number = 2): number {
+    //return Number(Math.round(value + 'e+' + decimals) + 'e-' + decimals);
+    if (!isFinite(value)) return value; // Handle NaN, Infinity, and -Infinity
+
+    const factor = Math.pow(10, decimals);
+    const result = Math.round((value + Math.sign(value) * Number.EPSILON) * factor) / factor;
+    return result === 0 ? 0 : result; // Ensure `-0` becomes `0`
+}
+
 export class ExplainedValue<T> {
     value: T;
     displayName: string;
@@ -154,11 +164,13 @@ function simpleExplainedValue(name: string, value: SettingValue<any>): Explained
     return new ExplainedValue(name, value.toValue(), value.displayValue, value);
 }
 
-function sumExplainedValue(name: string, units: string, values: Array<SettingValue<any>>): ExplainedValue<number> {
+function sumExplainedValue(name: string, units: string, values: Array<SettingValue<number>>): ExplainedValue<number> {
     let sum = 0;
     values.forEach(value => {
         sum += value.toValue();
     });
+
+    sum = roundTo(sum, 3);
 
     return new ExplainedValue(name, sum, `${sum} ${units}`, new ExplanationSumOf(values));
 }
@@ -186,7 +198,7 @@ function maxExplainedValue(name: string, values: Array<SettingValue<number>>, de
 function explainClampedSpeed(name: string, slicerSettings: RequiredSlicerSettings, speedSetting: SettingValue<number>, maxLinearSpeed: number): ExplainedValue<number> {
     const settings = slicerSettings.settings;
     const requestedSpeed = speedSetting.toValue();
-    const clampedSpeed = clampSpeedToVolumetricFlow(requestedSpeed, maxLinearSpeed);
+    const clampedSpeed = roundTo(clampSpeedToVolumetricFlow(requestedSpeed, maxLinearSpeed), 3);
     return new ExplainedValue(name, clampedSpeed, `${clampedSpeed} mm/s`, new ExplanationVolumetricFlow(
         [speedSetting],
         [settings.max_volumetric_speed, settings.filament_max_volumetric_speed],

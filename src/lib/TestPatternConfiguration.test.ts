@@ -1,5 +1,5 @@
 import { describe, it, expect, test } from 'vitest';
-import { selectPressureAdvanceGCodePrefix } from './TestPatternConfiguration';
+import { roundTo, selectPressureAdvanceGCodePrefix } from './TestPatternConfiguration';
 
 describe('GCode Prefix Tests', () => {
     const klipperPrefix = 'SET_PRESSURE_ADVANCE EXTRUDER=extruder1 ADVANCE=';
@@ -36,5 +36,16 @@ describe('GCode Prefix Tests', () => {
 
         ])('selectPressureAdvanceGCodePrefix(%s, %s, 1) -> %s', (flavour, printerModel, expected) => {
             expect(selectPressureAdvanceGCodePrefix(flavour, printerModel, 1).gcodePrefix).toBe(expected);
+        })
+});
+
+describe('Test roundTo', () => {
+    test.each([
+            [0.00001, 2, 0],
+            [0.005, 2, 0.01],
+            [-0.005, 2, -0.01],
+            [-0.0, 1, 0],
+        ])('roundTo(%s, %s) -> %s', (value, decimals, expected) => {
+            expect(roundTo(value, decimals)).toBe(expected);
         })
 });
