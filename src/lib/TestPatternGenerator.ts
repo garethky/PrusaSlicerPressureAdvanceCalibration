@@ -236,6 +236,7 @@ export function generateTestPattern(calibrationParams: TestPatternConfiguration,
                 zHop('+', basicSettings) +
                 moveTo(frameStartX1, frameStartY, basicSettings) +
                 zHop('-', basicSettings) +
+                doEfeed('+', basicSettings) + // initally the nozzle may be retracted from the purge line, de-retract
                 createLine(frameStartX1, frameStartY + frameLength, frameLength, basicSettings, {'extMult': EXT_MULT * 1.1}) +
                 moveTo(frameStartX1 + LINE_WIDTH, frameStartY + frameLength, basicSettings) +
                 createLine(frameStartX1 + LINE_WIDTH, frameStartY, -frameLength, basicSettings, {'extMult': EXT_MULT * 1.1}) +
