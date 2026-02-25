@@ -87,7 +87,7 @@ function klipperStartGocde(startLines: Array<string>, endLines: Array<string>, s
     // im not going to override acceleration, you should set your printer up to hit the limits in the slicer.
     // changing hardware limits could be harmful to the printer
     startLines.push(`\nSET_VELOCITY_LIMIT SQUARE_CORNER_VELOCITY=1\n`);
-    // srap the print in start/end object calls
+    // wrap the print in start/end object calls
     if (hasExcludeObject) {
         startLines.push(`EXCLUDE_OBJECT_START NAME=${objectName}`)
         endLines.unshift(`EXCLUDE_OBJECT_END NAME=${objectName}`);

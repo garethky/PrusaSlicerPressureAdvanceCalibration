@@ -133,7 +133,7 @@ export function selectPressureAdvanceGCodePrefix(flavour: string, printerModel: 
         }
     }
 
-    throw `Sorry, your firmware type is not supported yet`;
+    throw `Sorry, your firmware type "${flavour}" is not supported yet`;
 }
 
 // Precision rounding to the nth decimal place
@@ -192,7 +192,7 @@ function maxExplainedValue(name: string, values: Array<SettingValue<number>>, de
     if (default_value && default_value.toValue() > 0){
         return simpleExplainedValue(name, default_value);
     }
-    throw "No max value found, all values are null or 0!";
+    throw `${name}: No max value found, all values are null or 0!`;
 }
 
 function explainClampedSpeed(name: string, slicerSettings: RequiredSlicerSettings, speedSetting: SettingValue<number>, maxLinearSpeed: number): ExplainedValue<number> {
@@ -238,6 +238,7 @@ export class TestPatternConfiguration {
     fan_speed: ExplainedValue<number>;
     advance_gcode_prefix: ExplainedValue<PressureAdvanceGCode>;
     travelAcceleration: ExplainedValue<number>;
+    default_extruding_acceleration: ExplainedValue<number>;
     testAcceleration: ExplainedValue<number>;
     printAcceleration: ExplainedValue<number>;
     zHopHeight: ExplainedValue<number>;
@@ -283,8 +284,11 @@ export class TestPatternConfiguration {
         // speeds
         const travelAcceleration = settings.travel_acceleration;
         const defaultAcceleration = settings.default_acceleration;
+        const machine_acceleration = settings.machine_max_acceleration_extruding;
         this.travelAcceleration = simpleExplainedValue('Travel Acceleration', travelAcceleration.toValue() > 0 ? travelAcceleration : defaultAcceleration);
-        this.testAcceleration = maxExplainedValue('Test Acceleration', [settings.perimeter_acceleration, settings.infill_acceleration, settings.solid_infill_acceleration, settings.top_solid_infill_acceleration, settings.external_perimeter_acceleration], defaultAcceleration);
+        const default_extruding_acceleration = defaultAcceleration.toValue() > 0 ? defaultAcceleration : machine_acceleration;
+        this.default_extruding_acceleration = simpleExplainedValue('Default Extruding Acceleration', default_extruding_acceleration);
+        this.testAcceleration = maxExplainedValue('Test Acceleration', [settings.perimeter_acceleration, settings.infill_acceleration, settings.solid_infill_acceleration, settings.top_solid_infill_acceleration, settings.external_perimeter_acceleration], default_extruding_acceleration);
         const firstLayerAcceleration = settings.first_layer_acceleration;
         this.printAcceleration = simpleExplainedValue('Print Acceleration', firstLayerAcceleration.toValue() > 0 ? firstLayerAcceleration : defaultAcceleration);
 
